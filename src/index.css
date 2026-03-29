@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-coffee-dark: #2B1B12;
+  --color-espresso: #3E2723;
+  --color-caramel: #C68E5D;
+  --color-gold: #FFD700;
+  --color-cream: #F5E6D3;
+  --color-liquid-purple: #1a0b2e;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-coffee-dark text-cream selection:bg-caramel/30;
+    background: radial-gradient(circle at center, #3E2723 0%, #2B1B12 70%, #1a0b2e 100%);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10;
+  }
+  
+  .glow-border {
+    @apply border border-caramel/30 shadow-[0_0_20px_rgba(198,142,93,0.15)];
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+
+  .liquid-blob {
+    filter: blur(80px);
+    background: radial-gradient(circle at center, #C68E5D 0%, transparent 70%);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2B1B12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3E2723;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C68E5D;
+}
+
+/* Lenis Smooth Scroll */
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}

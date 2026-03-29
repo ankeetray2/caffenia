@@ -1,0 +1,1519 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
+import { Search, Coffee, MapPin, Star, ArrowRight, Menu, X, User, ShoppingCart, Settings, Package, LogOut, ChevronRight, Filter, Check, Droplets, Zap, FlaskConical, Wind, Cylinder, Flame, ChevronDown, Plus } from 'lucide-react';
+import { Canvas } from '@react-three/fiber';
+import { EffectComposer, Bloom, DepthOfField, Vignette } from '@react-three/postprocessing';
+import { CoffeeBean, CoffeeDust, CoffeeSteam, LiquidBlob, BeanCluster } from './ThreeScene';
+import { cn } from '../lib/utils';
+import { Link, useLocation, useParams } from 'react-router-dom';
+
+// --- Navbar ---
+export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => void, onOpenCategories: () => void }) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <nav className={cn(
+      "fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 py-4",
+      isScrolled ? "glass py-3" : "bg-transparent"
+    )}>
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)] group-hover:scale-110 transition-transform">
+            <Coffee className="text-coffee-dark w-6 h-6" />
+          </div>
+          <span className="text-2xl font-bold tracking-tighter text-cream uppercase">Caffeina</span>
+        </Link>
+
+        <div className="hidden md:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-cream/70">
+          <Link to="/" className={cn("hover:text-gold transition-colors", location.pathname === "/" && "text-gold")}>Experience</Link>
+          <button onClick={onOpenCategories} className="hover:text-gold transition-colors flex items-center gap-1">
+            Categories <Filter className="w-3 h-3" />
+          </button>
+          <Link to="/about" className={cn("hover:text-gold transition-colors", location.pathname === "/about" && "text-gold")}>Story</Link>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button onClick={onOpenCart} className="relative p-2 hover:bg-white/10 rounded-full transition-colors group">
+            <ShoppingCart className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-caramel text-coffee-dark text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
+          </button>
+          <Link to="/account" className="flex items-center gap-2 glass px-4 py-2 rounded-full text-sm font-semibold hover:glow-border transition-all">
+            <User className="w-4 h-4" />
+            <span className="hidden sm:inline">Account</span>
+          </Link>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// --- Hero Section ---
+export function Hero() {
+  return (
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* 3D Background */}
+      <div className="absolute inset-0 z-0">
+        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+          <ambientLight intensity={0.4} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} color="#FFD700" />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#C68E5D" />
+          <CoffeeDust count={400} />
+          <BeanCluster />
+          <LiquidBlob />
+          
+          <EffectComposer>
+            <DepthOfField focusDistance={0.012} focalLength={0.015} bokehScale={3} height={480} />
+            <Bloom intensity={2} luminanceThreshold={0.15} luminanceSmoothing={0.9} height={300} />
+            <Vignette eskil={false} offset={0.1} darkness={1.1} />
+          </EffectComposer>
+        </Canvas>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 text-center px-6 max-w-5xl pointer-events-none">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <motion.span 
+            initial={{ opacity: 0, letterSpacing: "0.5em" }}
+            animate={{ opacity: 1, letterSpacing: "1em" }}
+            transition={{ duration: 2, delay: 0.5 }}
+            className="text-gold font-mono text-[10px] uppercase block mb-8 font-bold"
+          >
+            EST. 2026
+          </motion.span>
+          <h1 className="text-7xl md:text-[10vw] font-bold tracking-tighter mb-8 leading-[0.8] text-glow uppercase">
+            The <br />
+            <span className="text-caramel italic serif lowercase">Ritual</span>
+          </h1>
+          <p className="text-cream/40 text-lg md:text-2xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+            Immersive coffee discovery through cinematic design and rare harvests.
+          </p>
+          
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.2, duration: 1 }}
+            className="pointer-events-auto"
+          >
+            <Link to="/shopping">
+              <button className="group relative px-12 py-5 rounded-full overflow-hidden glass border-white/10 hover:glow-border transition-all duration-500">
+                <div className="absolute inset-0 bg-caramel/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.4em] text-gold group-hover:text-cream transition-colors">
+                  Explore Collection
+                </span>
+              </button>
+            </Link>
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Scroll Indicator */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2, duration: 1 }}
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
+      >
+        <span className="text-[8px] uppercase tracking-[0.5em] text-cream/20 font-bold">Scroll to Discover</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-gold/40 to-transparent" />
+      </motion.div>
+
+      {/* Ambient Glow */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-coffee-dark/0 via-coffee-dark/20 to-coffee-dark pointer-events-none" />
+    </section>
+  );
+}
+
+// --- Category Modal ---
+export function CategoryModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+  const categories = [
+    { name: "Single Origin", icon: "🌍", count: 24 },
+    { name: "House Blends", icon: "🏠", count: 12 },
+    { name: "Rare Finds", icon: "💎", count: 5 },
+    { name: "Brewing Gear", icon: "⚖️", count: 18 },
+    { name: "Coffee Spaces", icon: "🏢", count: 8 },
+    { name: "Workshops", icon: "🎓", count: 4 },
+  ];
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-coffee-dark/90 backdrop-blur-xl"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+            transition={{ type: "spring", damping: 30, stiffness: 200 }}
+            className="relative glass w-full max-w-4xl rounded-[60px] p-12 glow-border overflow-hidden bg-white/5 border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.5)]"
+          >
+            {/* Background Glow */}
+            <div className="absolute -top-40 -left-40 w-96 h-96 bg-caramel/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gold/5 rounded-full blur-[120px] pointer-events-none" />
+
+            <button onClick={onClose} className="absolute top-8 right-8 p-3 hover:bg-white/10 rounded-full transition-all group z-20">
+              <X className="w-8 h-8 group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+
+            <div className="relative z-10">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mb-12"
+              >
+                <span className="text-caramel font-mono text-[10px] uppercase tracking-[0.5em] mb-4 block font-bold">Discovery</span>
+                <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Collections</h2>
+              </motion.div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {categories.map((cat, i) => (
+                  <motion.button
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + i * 0.05 }}
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    className="glass p-8 rounded-[40px] text-left group hover:glow-border transition-all bg-white/5 border-white/5 relative overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-caramel/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="text-5xl mb-6 block drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500">{cat.icon}</span>
+                    <h3 className="font-bold text-xl mb-2 group-hover:text-gold transition-colors tracking-tighter uppercase">{cat.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-cream/40 uppercase tracking-[0.3em] font-bold">{cat.count} Items</span>
+                      <ChevronRight className="w-4 h-4 text-caramel opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// --- Cart Panel ---
+export function CartPanel({ isOpen, onClose, items, onRemove, onUpdateQty }: { 
+  isOpen: boolean, 
+  onClose: () => void, 
+  items: any[],
+  onRemove: (id: string) => void,
+  onUpdateQty: (id: string, delta: number) => void
+}) {
+  const subtotal = items.reduce((acc, item) => acc + (parseFloat(item.price.replace('$', '')) * item.qty), 0);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-coffee-dark/80 backdrop-blur-md"
+          />
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 200, mass: 0.8 }}
+            className="relative w-full max-w-md h-full glass border-l border-white/10 p-10 flex flex-col bg-coffee-dark/95 backdrop-blur-2xl shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
+          >
+            {/* Background Glow */}
+            <div className="absolute top-1/4 -right-20 w-64 h-64 bg-caramel/10 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="flex items-center justify-between mb-12 relative z-10">
+              <div>
+                <span className="text-caramel font-mono text-[10px] uppercase tracking-[0.5em] mb-2 block font-bold">Your Ritual</span>
+                <h2 className="text-4xl font-bold tracking-tighter uppercase">Cart</h2>
+              </div>
+              <button onClick={onClose} className="p-3 hover:bg-white/10 rounded-full transition-all group">
+                <X className="w-8 h-8 group-hover:rotate-90 transition-transform duration-500" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-8 pr-4 custom-scrollbar relative z-10">
+              {items.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-cream/20 space-y-6">
+                  <div className="w-24 h-24 rounded-full glass flex items-center justify-center border-white/5">
+                    <ShoppingCart className="w-10 h-10 opacity-20" />
+                  </div>
+                  <p className="uppercase tracking-[0.4em] text-[10px] font-bold">Your ritual is empty</p>
+                </div>
+              ) : (
+                items.map((item, i) => (
+                  <motion.div 
+                    key={i}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex gap-6 items-center group relative"
+                  >
+                    <div className="w-24 h-24 rounded-[32px] overflow-hidden glass border-white/10 group-hover:glow-border transition-all duration-500 flex-shrink-0">
+                      <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-cream group-hover:text-gold transition-colors tracking-tight text-lg mb-1">{item.title}</h3>
+                      <span className="text-caramel font-mono text-xs font-bold tracking-wider">{item.price}</span>
+                      <div className="flex items-center gap-4 mt-4">
+                        <div className="flex items-center gap-3 glass px-3 py-1.5 rounded-full border-white/5">
+                          <button 
+                            onClick={() => onUpdateQty(item.id, -1)}
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-gold transition-all"
+                          >
+                            -
+                          </button>
+                          <span className="text-xs font-bold w-4 text-center">{item.qty}</span>
+                          <button 
+                            onClick={() => onUpdateQty(item.id, 1)}
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-gold transition-all"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => onRemove(item.id)}
+                      className="absolute top-0 right-0 p-2 text-cream/10 hover:text-destructive transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </motion.div>
+                ))
+              )}
+            </div>
+
+            {items.length > 0 && (
+              <div className="mt-10 pt-10 border-t border-white/10 space-y-6 relative z-10">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-cream/40 text-xs uppercase tracking-widest font-bold">
+                    <span>Subtotal</span>
+                    <span className="font-mono">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-2xl font-bold tracking-tighter">
+                    <span className="uppercase">Total</span>
+                    <span className="text-gold font-mono">${subtotal.toFixed(2)}</span>
+                  </div>
+                </div>
+                <Link to="/thankyou" onClick={onClose} className="block">
+                  <button className="w-full bg-caramel text-coffee-dark py-6 rounded-[32px] font-bold uppercase tracking-[0.3em] text-[10px] hover:bg-gold transition-all shadow-[0_20px_40px_rgba(198,142,93,0.2)] hover:shadow-[0_20px_50px_rgba(255,215,0,0.3)] active:scale-[0.98]">
+                    Complete Ritual
+                  </button>
+                </Link>
+                <p className="text-center text-[8px] text-cream/20 uppercase tracking-[0.4em] font-bold">Secure Checkout Powered by Caffeina</p>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// --- Account Dashboard ---
+export function AccountDashboard() {
+  const [activeTab, setActiveTab] = useState('profile');
+
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'orders', label: 'Orders', icon: Package },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 relative z-10">
+        {/* Sidebar */}
+        <div className="lg:w-80 space-y-4">
+          <div className="mb-10">
+            <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-4 block font-bold">Member Portal</span>
+            <h2 className="text-5xl font-bold tracking-tighter text-glow uppercase">Account</h2>
+          </div>
+          
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "w-full flex items-center gap-4 px-8 py-5 rounded-3xl transition-all font-bold uppercase tracking-widest text-xs border border-white/5",
+                activeTab === tab.id 
+                  ? "bg-caramel text-coffee-dark shadow-[0_0_30px_rgba(198,142,93,0.3)]" 
+                  : "glass text-cream/60 hover:text-cream hover:bg-white/5"
+              )}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+          <button className="w-full flex items-center gap-4 px-8 py-5 rounded-3xl glass text-destructive hover:bg-destructive/10 transition-all font-bold uppercase tracking-widest text-xs mt-10 border border-destructive/20">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="glass rounded-[48px] p-12 glow-border bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl"
+            >
+              {activeTab === 'profile' && (
+                <div className="space-y-12">
+                  <div className="flex items-center gap-8">
+                    <div className="w-32 h-32 rounded-full glass border-2 border-caramel p-1 relative group">
+                      <img src="https://picsum.photos/seed/user/200/200" alt="avatar" className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-coffee-dark/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <Settings className="w-6 h-6 text-gold" />
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-4xl font-bold tracking-tighter uppercase mb-2">Ankit Kumar</h2>
+                      <p className="text-gold font-mono text-sm">ankitkumar999090@gmail.com</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Full Name</label>
+                      <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">Ankit Kumar</div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Member Since</label>
+                      <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">March 2026</div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Preferred Roast</label>
+                      <div className="glass px-8 py-5 rounded-2xl text-gold border border-gold/20 font-bold">Light-Medium</div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Total Rituals</label>
+                      <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">12 Brews</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'orders' && (
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold mb-6 uppercase tracking-widest">Recent Orders</h3>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="glass p-8 rounded-[32px] flex items-center justify-between group hover:glow-border transition-all bg-white/5 border border-white/5">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-caramel/10 flex items-center justify-center border border-caramel/20">
+                          <Package className="text-caramel w-8 h-8" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-lg uppercase tracking-tight">Order #CF-928{i}</h4>
+                          <p className="text-xs text-cream/40 uppercase tracking-widest">Delivered on March {20 + i}, 2026</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-8">
+                        <div className="text-right">
+                          <span className="block font-mono text-gold text-xl font-bold">$84.00</span>
+                          <span className="text-[10px] text-cream/20 uppercase font-bold">3 Items</span>
+                        </div>
+                        <Link to="/tracking" className="w-12 h-12 rounded-full glass flex items-center justify-center group-hover:bg-caramel group-hover:text-coffee-dark transition-all">
+                          <ChevronRight className="w-6 h-6" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === 'settings' && (
+                <div className="space-y-8">
+                  <h3 className="text-xl font-bold mb-6 uppercase tracking-widest">Preferences</h3>
+                  <div className="flex items-center justify-between p-8 glass rounded-[32px] bg-white/5 border border-white/5">
+                    <div>
+                      <h4 className="font-bold text-lg">Email Notifications</h4>
+                      <p className="text-sm text-cream/40">Receive updates about new roasts and rare finds</p>
+                    </div>
+                    <div className="w-14 h-7 bg-caramel rounded-full relative p-1 cursor-pointer shadow-[0_0_20px_rgba(198,142,93,0.3)]">
+                      <div className="w-5 h-5 bg-coffee-dark rounded-full absolute right-1" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-8 glass rounded-[32px] bg-white/5 border border-white/5">
+                    <div>
+                      <h4 className="font-bold text-lg">Two-Factor Authentication</h4>
+                      <p className="text-sm text-cream/40">Secure your account with biometric verification</p>
+                    </div>
+                    <div className="w-14 h-7 bg-white/10 rounded-full relative p-1 cursor-pointer">
+                      <div className="w-5 h-5 bg-cream/20 rounded-full absolute left-1" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-8 glass rounded-[32px] bg-white/5 border border-white/5">
+                    <div>
+                      <h4 className="font-bold text-lg">Privacy Mode</h4>
+                      <p className="text-sm text-cream/40">Hide your brewing history from the community</p>
+                    </div>
+                    <div className="w-14 h-7 bg-white/10 rounded-full relative p-1 cursor-pointer">
+                      <div className="w-5 h-5 bg-cream/20 rounded-full absolute left-1" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Card Component ---
+export function CoffeeCard({ title, location, rating, image, price, oldPrice, tag, description, id = "1", onAddToCart }: any) {
+  return (
+    <motion.div
+      whileHover={{ y: -10, scale: 1.03 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="glass rounded-[40px] overflow-hidden group cursor-pointer relative glow-border-hover"
+    >
+      <Link to={`/coffeeDetail/${id}`}>
+        <div className="relative h-72 overflow-hidden">
+          <img 
+            src={image} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-coffee-dark via-transparent to-transparent" />
+          
+          {/* Tag */}
+          <div className="absolute top-6 left-6">
+            <div className="glass px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gold glow-border bg-coffee-dark/40 backdrop-blur-md">
+              {tag || "Premium"}
+            </div>
+          </div>
+
+          <div className="absolute top-6 right-6 glass px-4 py-2 rounded-full flex items-center gap-2 text-xs font-bold glow-border">
+            <Star className="w-3 h-3 text-gold fill-gold" />
+            <span>{rating}</span>
+          </div>
+        </div>
+      </Link>
+
+      <div className="p-8">
+        <div className="flex justify-between items-start mb-2">
+          <Link to={`/coffeeDetail/${id}`}>
+            <h3 className="text-2xl font-bold text-cream group-hover:text-gold transition-colors tracking-tighter uppercase">
+              {title}
+            </h3>
+          </Link>
+          <div className="flex flex-col items-end">
+            <span className="text-caramel font-bold text-xl">{price}</span>
+            {oldPrice && (
+              <span className="text-cream/30 text-xs line-through">{oldPrice}</span>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2 text-cream/40 text-sm mb-4">
+          <MapPin className="w-4 h-4" />
+          <span>{location}</span>
+        </div>
+
+        <p className="text-cream/60 text-xs line-clamp-2 mb-6 leading-relaxed italic">
+          {description}
+        </p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex -space-x-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="w-10 h-10 rounded-full border-2 border-coffee-dark overflow-hidden glass">
+                <img src={`https://picsum.photos/seed/user${i}/100/100`} alt="user" referrerPolicy="no-referrer" />
+              </div>
+            ))}
+            <div className="w-10 h-10 rounded-full border-2 border-coffee-dark bg-espresso flex items-center justify-center text-[10px] font-bold text-cream/40">
+              +12
+            </div>
+          </div>
+          
+          <motion.button 
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={(e) => {
+              e.preventDefault();
+              onAddToCart && onAddToCart({ id, title, price, image });
+            }}
+            className="px-6 py-3 rounded-full bg-caramel text-coffee-dark font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(198,142,93,0.3)] hover:shadow-[0_0_30px_rgba(198,142,93,0.5)] transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add to Cart</span>
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// --- Search Page ---
+export function SearchPage() {
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const results = LISTINGS.slice(0, 3);
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Discovery</span>
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Search Results</h2>
+          </motion.div>
+          
+          <button className="glass px-8 py-4 rounded-full flex items-center gap-3 text-sm font-bold uppercase tracking-widest hover:glow-border transition-all bg-white/5 backdrop-blur-xl border border-white/10">
+            <Filter className="w-4 h-4 text-caramel" /> 
+            <span>Filters</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {loading ? (
+            Array(3).fill(0).map((_, i) => (
+              <div key={i} className="glass h-[500px] rounded-[40px] animate-pulse bg-white/5 border border-white/10" />
+            ))
+          ) : (
+            results.map((item, index) => (
+              <CoffeeCard key={index} {...item} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Shopping Page ---
+export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void }) {
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('Featured');
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
+
+  const filters = ['All', 'Light', 'Medium', 'Dark', 'Instant', 'Brew'];
+
+  const filteredItems = LISTINGS.filter(item => {
+    if (activeFilter === 'All') return true;
+    if (activeFilter === 'Instant' || activeFilter === 'Brew') return item.tag === activeFilter;
+    return item.profile.roast.includes(activeFilter);
+  });
+
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    if (sortBy === 'Price: Low to High') return parseFloat(a.price.replace('$', '')) - parseFloat(b.price.replace('$', ''));
+    if (sortBy === 'Price: High to Low') return parseFloat(b.price.replace('$', '')) - parseFloat(a.price.replace('$', ''));
+    if (sortBy === 'Rating') return b.rating - a.rating;
+    return 0;
+  });
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Premium Roasts</span>
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Browse Collection</h2>
+          </motion.div>
+
+          {/* Sort Dropdown */}
+          <div className="relative group">
+            <div className="glass px-6 py-3 rounded-full flex items-center gap-4 cursor-pointer hover:glow-border transition-all">
+              <span className="text-cream/40 text-xs uppercase font-bold tracking-widest">Sort By</span>
+              <span className="text-cream font-bold text-sm">{sortBy}</span>
+              <ChevronDown className="w-4 h-4 text-caramel" />
+            </div>
+            <div className="absolute top-full right-0 mt-2 w-56 glass rounded-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 backdrop-blur-xl border border-white/10">
+              {['Featured', 'Price: Low to High', 'Price: High to Low', 'Rating'].map((option) => (
+                <div
+                  key={option}
+                  onClick={() => setSortBy(option)}
+                  className={cn(
+                    "px-6 py-4 text-sm cursor-pointer transition-colors hover:bg-white/5",
+                    sortBy === option ? "text-gold bg-white/5" : "text-cream/60"
+                  )}
+                >
+                  {option}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-12">
+          {/* Filter Panel */}
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={cn(
+              "lg:w-64 flex-shrink-0 transition-all duration-500",
+              !isFilterOpen && "lg:w-12"
+            )}
+          >
+            <div className="glass rounded-[32px] p-8 sticky top-32 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between mb-8">
+                <div className={cn("flex items-center gap-3", !isFilterOpen && "hidden")}>
+                  <Filter className="w-5 h-5 text-caramel" />
+                  <span className="font-bold text-cream uppercase tracking-widest text-sm">Filters</span>
+                </div>
+                <button 
+                  onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-caramel hover:text-coffee-dark transition-all"
+                >
+                  {isFilterOpen ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {isFilterOpen && (
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-[10px] font-bold text-cream/30 uppercase tracking-[0.3em] mb-4">Categories</h4>
+                    <div className="space-y-2">
+                      {filters.map(filter => (
+                        <motion.div
+                          key={filter}
+                          whileHover={{ x: 5 }}
+                          onClick={() => setActiveFilter(filter)}
+                          className={cn(
+                            "px-4 py-3 rounded-xl cursor-pointer transition-all flex items-center justify-between group",
+                            activeFilter === filter 
+                              ? "bg-caramel text-coffee-dark font-bold shadow-lg" 
+                              : "hover:bg-white/5 text-cream/60"
+                          )}
+                        >
+                          <span className="text-sm">{filter}</span>
+                          {activeFilter === filter && <Check className="w-4 h-4" />}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-white/5">
+                    <h4 className="text-[10px] font-bold text-cream/30 uppercase tracking-[0.3em] mb-4">Price Range</h4>
+                    <div className="px-2">
+                      <div className="h-1 w-full bg-white/10 rounded-full relative">
+                        <div className="absolute inset-y-0 left-0 right-1/4 bg-caramel rounded-full" />
+                        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 bg-cream rounded-full border-2 border-caramel shadow-lg cursor-pointer" />
+                        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-4 h-4 bg-cream rounded-full border-2 border-caramel shadow-lg cursor-pointer" />
+                      </div>
+                      <div className="flex justify-between mt-4 text-[10px] font-mono text-cream/40">
+                        <span>$0</span>
+                        <span>$200</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Product Grid */}
+          <div className="flex-grow">
+            <motion.div 
+              layout
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
+            >
+              <AnimatePresence mode="popLayout">
+                {sortedItems.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <CoffeeCard {...item} onAddToCart={onAddToCart} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+
+            {sortedItems.length === 0 && (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Coffee className="w-10 h-10 text-cream/20" />
+                </div>
+                <h3 className="text-2xl font-bold text-cream mb-2">No results found</h3>
+                <p className="text-cream/40">Try adjusting your filters to find what you're looking for.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Coffee Detail Page ---
+export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => void }) {
+  const { id } = useParams();
+  const item = LISTINGS.find(l => l.id === id) || LISTINGS[0];
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+          {/* Left: 3D Model Placeholder */}
+          <div className="sticky top-32">
+            <div className="relative h-[600px] glass rounded-[60px] overflow-hidden group shadow-[0_0_50px_rgba(0,0,0,0.3)] bg-white/5 border border-white/10">
+               <Canvas camera={{ position: [0, 0, 5] }}>
+                 <ambientLight intensity={0.5} />
+                 <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
+                 <CoffeeDust count={200} />
+                 <CoffeeSteam count={30} />
+                 <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={1.8} />
+                 <LiquidBlob />
+               </Canvas>
+               <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                 Interactive 3D Harvest
+               </div>
+               
+               {/* Floating Badge */}
+               <motion.div 
+                 animate={{ y: [0, -10, 0] }}
+                 transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                 className="absolute top-10 left-10 glass p-6 rounded-3xl border-gold/20 bg-coffee-dark/40 backdrop-blur-xl"
+               >
+                 <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold block mb-2">Purity Level</span>
+                 <div className="text-3xl font-bold font-mono">98.4%</div>
+               </motion.div>
+            </div>
+          </div>
+
+          {/* Right: Details */}
+          <div className="space-y-16">
+            <section>
+              <motion.span 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-caramel font-mono text-sm uppercase tracking-[0.4em] mb-6 block font-bold"
+              >
+                Special Reserve • {item.profile.origin}
+              </motion.span>
+              <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 text-glow leading-[0.9] uppercase">
+                {item.title}
+              </h1>
+              
+              <div className="flex items-center gap-10">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={cn("w-4 h-4", i < Math.floor(item.rating) ? "text-gold fill-gold" : "text-white/10")} />
+                    ))}
+                  </div>
+                  <span className="font-bold text-gold">{item.rating}</span>
+                  <span className="text-cream/20 text-xs uppercase tracking-widest">({item.reviews} Reviews)</span>
+                </div>
+                <div className="h-4 w-[1px] bg-white/10" />
+                <div className="flex items-center gap-2 text-cream/60 text-sm">
+                  <MapPin className="w-4 h-4 text-caramel" />
+                  {item.location}
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-8">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">The Story</h3>
+              <p className="text-2xl text-cream/60 leading-relaxed font-light italic font-serif">
+                "{item.description}"
+              </p>
+            </section>
+
+            <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: "Origin", value: item.profile.origin, icon: MapPin },
+                { label: "Roast", value: item.profile.roast, icon: Coffee },
+                { label: "Body", value: item.profile.body, icon: Droplets },
+                { label: "Acidity", value: item.profile.acidity, icon: Zap },
+              ].map((attr, i) => (
+                <div key={i} className="glass p-6 rounded-3xl border-white/5 hover:glow-border transition-all bg-white/5">
+                  <attr.icon className="w-5 h-5 text-caramel mb-4" />
+                  <span className="text-[10px] uppercase tracking-widest text-cream/40 font-bold block mb-1">{attr.label}</span>
+                  <span className="text-sm font-bold text-cream">{attr.value}</span>
+                </div>
+              ))}
+            </section>
+
+            <section className="space-y-8">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Flavor Profile</h3>
+              <div className="flex flex-wrap gap-4">
+                {item.flavorNotes.map((note, i) => (
+                  <motion.div 
+                    key={i}
+                    whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 215, 0, 0.1)" }}
+                    className="glass px-6 py-3 rounded-full border-gold/20 text-sm font-bold text-gold shadow-[0_0_15px_rgba(255,215,0,0.05)] cursor-default bg-white/5"
+                  >
+                    {note}
+                  </motion.div>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-8">
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Recommended Brewing</h3>
+              <div className="flex gap-10">
+                {item.brewingMethods.map((method, i) => {
+                  const MethodIcon = method.includes('V60') ? Wind : 
+                                   method.includes('Chemex') ? FlaskConical :
+                                   method.includes('Aeropress') ? Cylinder :
+                                   method.includes('Espresso') ? Coffee :
+                                   method.includes('Moka') ? Flame :
+                                   Coffee;
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-4 group">
+                      <div className="w-16 h-16 rounded-full glass flex items-center justify-center group-hover:bg-caramel group-hover:text-coffee-dark transition-all duration-500 bg-white/5">
+                        <MethodIcon className="w-6 h-6" />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-widest font-bold text-cream/40 group-hover:text-cream transition-colors">{method}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-10">
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-widest text-cream/40 font-bold mb-2">Price per 250g</span>
+                <span className="text-6xl font-bold text-gold font-mono tracking-tighter">{item.price}</span>
+              </div>
+              
+              <motion.button 
+                onClick={() => onAddToCart(item)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{ 
+                  boxShadow: ["0 0 20px rgba(198,142,93,0.2)", "0 0 40px rgba(198,142,93,0.5)", "0 0 20px rgba(198,142,93,0.2)"]
+                }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="px-16 py-8 bg-caramel text-coffee-dark rounded-full font-bold uppercase tracking-[0.3em] text-sm shadow-[0_0_40px_rgba(198,142,93,0.4)] hover:bg-gold transition-all relative overflow-hidden group"
+              >
+                <span className="relative z-10">Add to Ritual</span>
+                <motion.div 
+                  className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                />
+              </motion.button>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Thank You Page ---
+export function ThankYouPage() {
+  return (
+    <div className="min-h-screen bg-coffee-dark flex items-center justify-center text-center px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-2xl relative z-10 glass p-16 rounded-[60px] border border-white/10 shadow-2xl backdrop-blur-3xl"
+      >
+        <div className="relative w-48 h-48 mx-auto mb-12">
+          <Canvas camera={{ position: [0, 0, 5] }}>
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
+            <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
+            <CoffeeSteam count={20} />
+          </Canvas>
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ repeat: Infinity, duration: 3 }}
+            className="absolute inset-0 bg-gold/10 rounded-full blur-3xl"
+          />
+        </div>
+
+        <span className="text-caramel font-mono text-xs uppercase tracking-[0.5em] mb-6 block font-bold">Ritual Confirmed</span>
+        <h1 className="text-6xl font-bold tracking-tighter text-glow mb-8 uppercase">Thank You</h1>
+        <p className="text-xl text-cream/60 mb-12 leading-relaxed italic font-serif">
+          "Your selection has been secured. Our master roasters are now preparing your beans for the ultimate extraction."
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-6 justify-center">
+          <Link to="/tracking">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-10 py-5 bg-caramel text-coffee-dark rounded-full font-bold uppercase tracking-widest text-xs shadow-lg"
+            >
+              Track Shipment
+            </motion.button>
+          </Link>
+          <Link to="/shopping">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-10 py-5 glass text-cream rounded-full font-bold uppercase tracking-widest text-xs border border-white/10 hover:bg-white/5"
+            >
+              Back to Collection
+            </motion.button>
+          </Link>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// --- Order History Page ---
+export function OrderHistoryPage() {
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="mb-16 text-center">
+          <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Archive</span>
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Order History</h2>
+        </div>
+
+        <div className="space-y-8">
+          {[1, 2, 3, 4].map(i => (
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="glass p-10 rounded-[48px] border border-white/5 hover:glow-border transition-all bg-white/5 backdrop-blur-3xl group"
+            >
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                <div className="flex items-center gap-8">
+                  <div className="w-20 h-20 rounded-3xl bg-caramel/10 flex items-center justify-center border border-caramel/20">
+                    <Package className="text-caramel w-10 h-10" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-4 mb-2">
+                      <h4 className="text-2xl font-bold uppercase tracking-tight">Order #CF-928{i}</h4>
+                      <span className="px-3 py-1 rounded-full bg-gold/10 text-gold text-[10px] font-bold uppercase tracking-widest border border-gold/20">Delivered</span>
+                    </div>
+                    <p className="text-sm text-cream/40 uppercase tracking-widest font-bold">March {20 + i}, 2026 • 3 Items</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-10 w-full md:w-auto justify-between md:justify-end">
+                  <div className="text-right">
+                    <span className="block font-mono text-gold text-3xl font-bold">$84.00</span>
+                    <span className="text-[10px] text-cream/20 uppercase font-bold">Total Ritual Cost</span>
+                  </div>
+                  <Link to="/tracking" className="px-8 py-4 rounded-full glass text-xs font-bold uppercase tracking-widest hover:bg-caramel hover:text-coffee-dark transition-all border border-white/10">
+                    Details
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Tracking Page ---
+export function TrackingPage() {
+  const steps = [
+    { label: "Order Placed", date: "Mar 24, 10:30 AM", status: "completed" },
+    { label: "Master Roasting", date: "Mar 24, 02:15 PM", status: "completed" },
+    { label: "Quality Control", date: "Mar 25, 09:00 AM", status: "current" },
+    { label: "In Transit", date: "Expected Mar 26", status: "pending" },
+    { label: "Delivered", date: "Expected Mar 27", status: "pending" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="mb-16 text-center">
+          <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Real-time Logistics</span>
+          <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Track Ritual</h2>
+        </div>
+
+        <div className="glass p-12 rounded-[60px] border border-white/10 bg-white/5 backdrop-blur-3xl shadow-2xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-16 pb-10 border-b border-white/5 gap-6">
+            <div>
+              <h3 className="text-3xl font-bold tracking-tighter uppercase mb-2">Order #CF-9284</h3>
+              <p className="text-cream/40 text-sm uppercase tracking-widest font-bold">Estimated Delivery: March 27, 2026</p>
+            </div>
+            <div className="px-6 py-3 rounded-full bg-caramel/10 text-caramel text-xs font-bold uppercase tracking-widest border border-caramel/20">
+              In Progress
+            </div>
+          </div>
+
+          <div className="relative">
+            {/* Progress Line */}
+            <div className="absolute left-4 top-0 bottom-0 w-1 bg-white/5 rounded-full md:left-1/2 md:-translate-x-1/2" />
+            
+            <div className="space-y-12">
+              {steps.map((step, i) => (
+                <motion.div 
+                  key={i}
+                  initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className={cn(
+                    "relative flex items-center gap-8 md:gap-0",
+                    i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                  )}
+                >
+                  <div className="flex-1 hidden md:block" />
+                  
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center z-10 relative shadow-[0_0_20px_rgba(0,0,0,0.5)]",
+                    step.status === 'completed' ? "bg-caramel text-coffee-dark" : 
+                    step.status === 'current' ? "bg-gold text-coffee-dark animate-pulse" : "bg-white/10 text-cream/20"
+                  )}>
+                    {step.status === 'completed' ? <Check className="w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-current" />}
+                  </div>
+
+                  <div className={cn(
+                    "flex-1 glass p-8 rounded-[32px] border border-white/5 hover:glow-border transition-all bg-white/5",
+                    i % 2 === 0 ? "md:ml-12" : "md:mr-12"
+                  )}>
+                    <h4 className={cn(
+                      "text-xl font-bold uppercase tracking-tight mb-1",
+                      step.status === 'pending' ? "text-cream/20" : "text-cream"
+                    )}>
+                      {step.label}
+                    </h4>
+                    <p className="text-xs text-cream/40 uppercase tracking-widest font-bold">{step.date}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export const LISTINGS = [
+  {
+    id: "1",
+    title: "Ethiopian Yirgacheffe",
+    location: "Sidamo Highlands",
+    rating: 4.9,
+    reviews: 128,
+    price: "$42.00",
+    oldPrice: "$55.00",
+    tag: "Brew",
+    image: "https://picsum.photos/seed/coffee1/800/600",
+    description: "In the high-altitude Sidamo region, the Yirgacheffe harvest is a ritual of patience. Each cherry is hand-picked at the peak of ripeness, then washed in the mineral-rich waters of the highlands. The result is a cup that dances with floral elegance and citrus clarity.",
+    profile: {
+      origin: "Ethiopia",
+      roast: "Light",
+      body: "Tea-like",
+      acidity: "Bright & Citric"
+    },
+    flavorNotes: ["Jasmine", "Lemon Zest", "Bergamot", "Honey"],
+    brewingMethods: ["V60", "Chemex", "Aeropress"]
+  },
+  {
+    id: "2",
+    title: "The Velvet Room",
+    location: "Milan, Italy",
+    rating: 4.8,
+    reviews: 256,
+    price: "$38.00",
+    oldPrice: "$45.00",
+    tag: "Instant",
+    image: "https://picsum.photos/seed/cafe1/800/600",
+    description: "A tribute to the grand espresso bars of Milan. This blend is engineered for texture—a thick, syrupy body with a crema that holds its own. It's a dark, mysterious journey through chocolate and toasted hazelnuts.",
+    profile: {
+      origin: "Brazil & Sumatra",
+      roast: "Dark",
+      body: "Full & Syrupy",
+      acidity: "Low & Smooth"
+    },
+    flavorNotes: ["Dark Chocolate", "Hazelnut", "Molasses", "Smoke"],
+    brewingMethods: ["Espresso", "Moka Pot", "French Press"]
+  },
+  {
+    id: "3",
+    title: "Geisha Special Reserve",
+    location: "Panama Valley",
+    rating: 5.0,
+    reviews: 64,
+    price: "$120.00",
+    oldPrice: "$150.00",
+    tag: "Brew",
+    image: "https://picsum.photos/seed/coffee2/800/600",
+    description: "The crown jewel of the coffee world. Grown on the slopes of Volcán Barú, this Geisha lot is a masterclass in complexity. It defies traditional coffee profiles, offering a sensory experience more akin to a fine white wine or a bouquet of rare flowers.",
+    profile: {
+      origin: "Panama",
+      roast: "Ultra-Light",
+      body: "Ethereal",
+      acidity: "Sparkling"
+    },
+    flavorNotes: ["Peach Blossom", "Mango", "Earl Grey", "Rose Water"],
+    brewingMethods: ["V60", "Siphon", "Kalita Wave"]
+  },
+  {
+    id: "4",
+    title: "Obsidian Roastery",
+    location: "Tokyo, Japan",
+    rating: 4.7,
+    reviews: 89,
+    price: "$45.00",
+    oldPrice: "$52.00",
+    tag: "Brew",
+    image: "https://picsum.photos/seed/cafe2/800/600",
+    description: "Inspired by the minimalist aesthetics of Tokyo, this roast is clean, precise, and uncompromising. We use a slow-roasting technique to develop deep sweetness without any bitterness, resulting in a cup as clear as obsidian glass.",
+    profile: {
+      origin: "Guatemala",
+      roast: "Medium",
+      body: "Balanced",
+      acidity: "Winey"
+    },
+    flavorNotes: ["Red Apple", "Caramel", "Milk Chocolate", "Almond"],
+    brewingMethods: ["Hario V60", "Nel Drip", "Cold Brew"]
+  },
+  {
+    id: "5",
+    title: "Cold Brew Ritual",
+    location: "Brooklyn, NY",
+    rating: 4.6,
+    reviews: 112,
+    price: "$18.00",
+    oldPrice: "$22.00",
+    tag: "Instant",
+    image: "https://picsum.photos/seed/coffee3/800/600",
+    description: "Engineered for the 18-hour steep. This coarse-ground blend is optimized for cold extraction, pulling out deep cocoa notes and a natural sweetness that requires no sugar. It's the ultimate urban refreshment.",
+    profile: {
+      origin: "Colombia",
+      roast: "Medium-Dark",
+      body: "Heavy",
+      acidity: "Muted"
+    },
+    flavorNotes: ["Cocoa Nibs", "Brown Sugar", "Vanilla Bean", "Toasted Oak"],
+    brewingMethods: ["Cold Brew", "French Press", "Toddy"]
+  },
+  {
+    id: "6",
+    title: "The Alchemist's Cup",
+    location: "London, UK",
+    rating: 4.9,
+    reviews: 76,
+    price: "$55.00",
+    oldPrice: "$68.00",
+    tag: "Brew",
+    image: "https://picsum.photos/seed/cafe3/800/600",
+    description: "A experimental lot processed using anaerobic fermentation. This process creates wild, funky flavors that challenge your perception of what coffee can be. It's a scientific breakthrough in a cup.",
+    profile: {
+      origin: "Costa Rica",
+      roast: "Light-Medium",
+      body: "Creamy",
+      acidity: "Tart & Complex"
+    },
+    flavorNotes: ["Strawberry", "Cinnamon", "Wine Grapes", "Cream"],
+    brewingMethods: ["Aeropress", "V60", "Clever Dripper"]
+  }
+];
+
+// --- Loading Screen ---
+export function LoadingScreen() {
+  return (
+    <motion.div 
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[1000] bg-coffee-dark flex flex-col items-center justify-center"
+    >
+      <div className="relative w-40 h-40 mb-8">
+        {/* Steam Particles */}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex gap-2">
+          {[1, 2, 3].map(i => (
+            <motion.div
+              key={i}
+              animate={{ 
+                y: [-10, -40], 
+                opacity: [0, 0.5, 0],
+                scale: [0.5, 1.5]
+              }}
+              transition={{ 
+                repeat: Infinity, 
+                duration: 2, 
+                delay: i * 0.4,
+                ease: "easeOut"
+              }}
+              className="w-2 h-8 bg-cream/20 rounded-full blur-sm"
+            />
+          ))}
+        </div>
+
+        {/* Cup Body */}
+        <div className="absolute inset-0 border-4 border-caramel rounded-b-[40px] rounded-t-lg overflow-hidden">
+          {/* Liquid Filling */}
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: "20%" }}
+            transition={{ duration: 2, ease: "easeInOut" }}
+            className="absolute inset-0 bg-espresso"
+          >
+            {/* Liquid Surface Waves */}
+            <motion.div
+              animate={{ x: ["-10%", "10%"] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", repeatType: "mirror" }}
+              className="absolute -top-2 left-0 w-[120%] h-4 bg-caramel/30 blur-sm"
+            />
+          </motion.div>
+        </div>
+        
+        {/* Cup Handle */}
+        <div className="absolute top-1/2 -right-8 -translate-y-1/2 w-10 h-16 border-4 border-caramel rounded-r-full" />
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center"
+      >
+        <h2 className="text-2xl font-bold tracking-tighter text-gold mb-2 uppercase tracking-[0.3em]">Brewing Ritual</h2>
+        <div className="flex gap-1 justify-center">
+          {[0, 1, 2].map(i => (
+            <motion.div
+              key={i}
+              animate={{ opacity: [0.2, 1, 0.2] }}
+              transition={{ repeat: Infinity, duration: 1, delay: i * 0.2 }}
+              className="w-1.5 h-1.5 bg-caramel rounded-full"
+            />
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// --- Category Page ---
+export function CategoryPage() {
+  const categories = [
+    { name: "Single Origin", icon: "🌍", count: 24, desc: "Pure essence from specific regions" },
+    { name: "House Blends", icon: "🏠", count: 12, desc: "Our signature balanced creations" },
+    { name: "Rare Finds", icon: "💎", count: 5, desc: "Limited edition micro-lots" },
+    { name: "Brewing Gear", icon: "⚖️", count: 18, desc: "Tools for the perfect extraction" },
+    { name: "Coffee Spaces", icon: "🏢", count: 8, desc: "Curated furniture for your ritual" },
+    { name: "Workshops", icon: "🎓", count: 4, desc: "Master the art of the brew" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <Canvas camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust />
+          <LiquidBlob />
+        </Canvas>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Explore</span>
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Categories</h2>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {categories.map((cat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.05, y: -10 }}
+              className="glass p-12 rounded-[48px] text-left group hover:glow-border transition-all cursor-pointer bg-white/5 backdrop-blur-2xl border border-white/10 relative overflow-hidden"
+            >
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-caramel/5 rounded-full blur-3xl group-hover:bg-caramel/20 transition-all" />
+              
+              <span className="text-7xl mb-10 block drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500">
+                {cat.icon}
+              </span>
+              <h3 className="text-3xl font-bold mb-4 group-hover:text-gold transition-colors tracking-tighter uppercase">
+                {cat.name}
+              </h3>
+              <p className="text-cream/40 text-sm mb-8 leading-relaxed italic">
+                {cat.desc}
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-caramel uppercase tracking-[0.3em] font-bold">
+                  {cat.count} Items
+                </span>
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-caramel group-hover:text-coffee-dark transition-all">
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Scroll Story (About Page) ---
+export function ScrollStory() {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const steps = [
+    { title: "The Origin", desc: "Sourced from high-altitude volcanic soils where the air is thin and the flavor is dense.", icon: "🌱" },
+    { title: "The Roast", desc: "Precision heat reveals hidden aromatic profiles, turning green beans into liquid gold.", icon: "🔥" },
+    { title: "The Grind", desc: "Uniform particles for perfect extraction, ensuring every note is captured.", icon: "⚙️" },
+    { title: "The Brew", desc: "92°C water meets the soul of the bean in a delicate dance of chemistry.", icon: "☕" },
+    { title: "The Moment", desc: "A sensory journey in every single sip. Experience the pure essence of taste.", icon: "✨" },
+  ];
+
+  return (
+    <section ref={containerRef} className="relative h-[600vh] bg-coffee-dark">
+      <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+        {/* Progress Bar */}
+        <div className="absolute left-12 top-1/2 -translate-y-1/2 w-1 h-80 bg-white/5 rounded-full overflow-hidden">
+          <motion.div 
+            style={{ scaleY: scrollYProgress }}
+            className="w-full h-full bg-caramel origin-top shadow-[0_0_20px_rgba(198,142,93,0.5)]"
+          />
+        </div>
+
+        {/* Dynamic Visuals */}
+        <div className="absolute inset-0 z-0 opacity-30">
+           <Canvas camera={{ position: [0, 0, 5] }}>
+             <ambientLight intensity={0.5} />
+             <pointLight position={[10, 10, 10]} intensity={1} color="#C68E5D" />
+             <CoffeeDust count={400} />
+             <LiquidBlob />
+             <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
+           </Canvas>
+        </div>
+
+        <div className="relative z-10 w-full max-w-5xl px-6">
+          {steps.map((step, index) => {
+            const start = index / steps.length;
+            const end = (index + 1) / steps.length;
+            
+            return (
+              <StoryStep 
+                key={index} 
+                step={step} 
+                progress={scrollYProgress} 
+                range={[start, end]} 
+              />
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StoryStep({ step, progress, range }: any) {
+  const opacity = useTransform(progress, [range[0], range[0] + 0.05, range[1] - 0.05, range[1]], [0, 1, 1, 0]);
+  const y = useTransform(progress, [range[0], range[1]], [100, -100]);
+  const scale = useTransform(progress, [range[0], range[1]], [0.8, 1.2]);
+
+  return (
+    <motion.div 
+      style={{ opacity, y, scale }}
+      className="absolute inset-0 flex flex-col items-center justify-center text-center"
+    >
+      <motion.span 
+        animate={{ y: [0, -10, 0] }}
+        transition={{ repeat: Infinity, duration: 3 }}
+        className="text-8xl mb-12 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+      >
+        {step.icon}
+      </motion.span>
+      <h2 className="text-6xl md:text-9xl font-bold mb-8 text-gold uppercase tracking-tighter text-glow">{step.title}</h2>
+      <p className="text-xl md:text-3xl text-cream/60 max-w-2xl font-light leading-relaxed">
+        {step.desc}
+      </p>
+    </motion.div>
+  );
+}
