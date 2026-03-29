@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import Lenis from '@studio-freight/lenis';
 import { 
@@ -18,12 +18,12 @@ import {
   TrackingPage,
   CategoryPage,
   LoadingScreen,
+  ShowcaseCard,
   LISTINGS
 } from './components/CoffeeComponents';
-import { CoffeeImageGenerator } from './components/CoffeeImageGenerator';
 import { Coffee } from 'lucide-react';
 
-function HomePage() {
+function HomePage({ onAddToCart }: { onAddToCart: (item: any) => void }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -45,10 +45,10 @@ function HomePage() {
               Popular Near You
             </h2>
           </div>
-          <button className="group flex items-center gap-4 text-gold font-bold uppercase tracking-[0.2em] text-xs">
+          <Link to="/shopping" className="group flex items-center gap-4 text-gold font-bold uppercase tracking-[0.2em] text-xs">
             View All Collections
             <div className="w-12 h-[1px] bg-gold group-hover:w-20 transition-all duration-500" />
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -60,7 +60,7 @@ function HomePage() {
               transition={{ delay: index * 0.1, duration: 0.8 }}
               viewport={{ once: true }}
             >
-              <CoffeeCard {...item} />
+              <ShowcaseCard item={item} onAddToCart={onAddToCart} />
             </motion.div>
           ))}
         </div>
@@ -161,7 +161,7 @@ function PageWrapper() {
 
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/category" element={<CategoryPage />} />
@@ -172,7 +172,6 @@ function PageWrapper() {
                 <Route path="/orderHistory" element={<OrderHistoryPage />} />
                 <Route path="/tracking" element={<TrackingPage />} />
                 <Route path="/coffeeDetail/:id" element={<CoffeeDetailPage onAddToCart={addToCart} />} />
-                <Route path="/studio" element={<CoffeeImageGenerator />} />
               </Routes>
             </AnimatePresence>
 
@@ -184,7 +183,7 @@ function PageWrapper() {
                     <div className="w-12 h-12 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)]">
                       <Coffee className="text-coffee-dark w-7 h-7" />
                     </div>
-                    <span className="text-3xl font-bold tracking-tighter uppercase">Caffeina</span>
+                    <span className="text-3xl font-bold tracking-tighter uppercase">ASSAVA</span>
                   </div>
                   <p className="text-cream/40 max-w-sm text-lg leading-relaxed font-light">
                     Redefining the coffee experience through cinematic design, technology, and the world's finest harvests.
@@ -210,7 +209,7 @@ function PageWrapper() {
                 </div>
               </div>
               <div className="max-w-7xl mx-auto mt-32 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-[0.3em] text-cream/20 font-bold">
-                <span>© 2026 Caffeina Platform. All rights reserved.</span>
+                <span>© 2026 ASSAVA Platform. All rights reserved.</span>
                 <div className="flex gap-10">
                   <a href="#" className="hover:text-cream transition-colors">Privacy Policy</a>
                   <a href="#" className="hover:text-cream transition-colors">Terms of Service</a>

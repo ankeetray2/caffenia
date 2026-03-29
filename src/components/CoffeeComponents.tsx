@@ -29,7 +29,7 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
           <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)] group-hover:scale-110 transition-transform">
             <Coffee className="text-coffee-dark w-6 h-6" />
           </div>
-          <span className="text-2xl font-bold tracking-tighter text-cream uppercase">Caffeina</span>
+          <span className="text-2xl font-bold tracking-tighter text-cream uppercase">ASSAVA</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-cream/70">
@@ -37,7 +37,6 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
           <button onClick={onOpenCategories} className="hover:text-gold transition-colors flex items-center gap-1">
             Categories <Filter className="w-3 h-3" />
           </button>
-          <Link to="/studio" className={cn("hover:text-gold transition-colors", location.pathname === "/studio" && "text-gold")}>Studio</Link>
           <Link to="/about" className={cn("hover:text-gold transition-colors", location.pathname === "/about" && "text-gold")}>Story</Link>
         </div>
 
@@ -667,170 +666,213 @@ export function SearchPage() {
 }
 
 // --- Shopping Page ---
+// --- Showcase Card ---
+export function ShowcaseCard({ item, onAddToCart }: { item: any, onAddToCart: (item: any) => void }) {
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 20;
+    const rotateY = (centerX - x) / 20;
+    setRotate({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        perspective: 1000,
+        rotateX: rotate.x,
+        rotateY: rotate.y,
+      }}
+      className="relative group cursor-pointer"
+    >
+      <Link to={`/coffeeDetail/${item.id}`}>
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[32px] bg-assava-brown border border-white/5 transition-all duration-700 group-hover:glow-border group-hover:-translate-y-4">
+          {/* Image */}
+          <motion.img
+            src={item.image}
+            alt={item.title}
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            referrerPolicy="no-referrer"
+          />
+          
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-700" />
+          
+          {/* Content */}
+          <div className="absolute inset-0 p-8 flex flex-col justify-end">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="space-y-2"
+            >
+              <div className="flex justify-between items-end">
+                <div>
+                  <span className="text-gold font-mono text-[10px] uppercase tracking-[0.3em] mb-2 block font-bold">
+                    {item.profile.origin} / {item.profile.roast} / {item.profile.type}
+                  </span>
+                  <h3 className="text-3xl font-bold tracking-tighter text-white group-hover:text-gold transition-colors duration-500">
+                    {item.title}
+                  </h3>
+                </div>
+                <span className="text-2xl font-bold text-cream/80">{item.price}</span>
+              </div>
+              
+              <div className="h-0 overflow-hidden group-hover:h-auto transition-all duration-700 opacity-0 group-hover:opacity-100 pt-4">
+                <p className="text-cream/60 text-sm leading-relaxed mb-6">
+                  {item.description}
+                </p>
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onAddToCart(item);
+                  }}
+                  className="w-full py-4 glass rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gold hover:bg-gold hover:text-coffee-dark transition-all duration-500"
+                >
+                  Add to Collection
+                </button>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Glow Accent */}
+          <div className="absolute -inset-px bg-gradient-to-tr from-gold/20 via-transparent to-caramel/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[32px]" />
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
 export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void }) {
   const [activeFilter, setActiveFilter] = useState('All');
-  const [sortBy, setSortBy] = useState('Featured');
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
-
-  const filters = ['All', 'Light', 'Medium', 'Dark', 'Instant', 'Brew'];
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filters = ['All', 'Instant', 'Brew', 'Espresso'];
 
   const filteredItems = LISTINGS.filter(item => {
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Instant' || activeFilter === 'Brew') return item.tag === activeFilter;
-    return item.profile.roast.includes(activeFilter);
-  });
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    if (sortBy === 'Price: Low to High') return parseFloat(a.price.replace('$', '')) - parseFloat(b.price.replace('$', ''));
-    if (sortBy === 'Price: High to Low') return parseFloat(b.price.replace('$', '')) - parseFloat(a.price.replace('$', ''));
-    if (sortBy === 'Rating') return b.rating - a.rating;
-    return 0;
+    const matchesFilter = activeFilter === 'All' || item.tag === activeFilter;
+    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
   });
 
   return (
-    <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
-          <CoffeeDust />
-          <LiquidBlob />
+    <div className="min-h-screen bg-black pt-40 pb-32 px-6 relative">
+      {/* Background Grain & Particles */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-30">
+        <Canvas gl={{ alpha: true }} camera={{ position: [0, 0, 5] }}>
+          <CoffeeDust count={100} />
         </Canvas>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <span className="text-caramel font-mono text-xs uppercase tracking-[0.4em] mb-6 block font-bold">Premium Roasts</span>
-            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-glow uppercase">Browse Collection</h2>
-          </motion.div>
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-24 gap-12">
+          <div className="max-w-2xl">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-gold font-mono text-xs uppercase tracking-[0.5em] mb-6 block font-bold"
+            >
+              Curated Blends
+            </motion.span>
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-6xl md:text-8xl font-bold tracking-tighter text-white leading-[0.9] mb-8"
+            >
+              Minimal. Modern. <br />
+              <span className="text-caramel italic serif lowercase">Unforgettable Coffee.</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-cream/40 text-xl font-light max-w-lg"
+            >
+              Explore curated blends crafted for experience. Each bean is a story of origin, precision, and passion.
+            </motion.p>
+          </div>
 
-          {/* Sort Dropdown */}
-          <div className="relative group">
-            <div className="glass px-6 py-3 rounded-full flex items-center gap-4 cursor-pointer hover:glow-border transition-all">
-              <span className="text-cream/40 text-xs uppercase font-bold tracking-widest">Sort By</span>
-              <span className="text-cream font-bold text-sm">{sortBy}</span>
-              <ChevronDown className="w-4 h-4 text-caramel" />
+          <div className="w-full lg:w-auto space-y-8">
+            {/* Search Bar */}
+            <div className="relative group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-cream/30 group-focus-within:text-gold transition-colors" />
+              <input 
+                type="text"
+                placeholder="Search Collection..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full lg:w-96 bg-white/5 border border-white/10 rounded-full py-5 pl-16 pr-8 text-sm text-cream focus:glow-border outline-none transition-all placeholder:text-cream/20"
+              />
             </div>
-            <div className="absolute top-full right-0 mt-2 w-56 glass rounded-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 backdrop-blur-xl border border-white/10">
-              {['Featured', 'Price: Low to High', 'Price: High to Low', 'Rating'].map((option) => (
-                <div
-                  key={option}
-                  onClick={() => setSortBy(option)}
+
+            {/* Filter Chips */}
+            <div className="flex flex-wrap gap-3">
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setActiveFilter(filter)}
                   className={cn(
-                    "px-6 py-4 text-sm cursor-pointer transition-colors hover:bg-white/5",
-                    sortBy === option ? "text-gold bg-white/5" : "text-cream/60"
+                    "px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-500",
+                    activeFilter === filter 
+                      ? "bg-gold text-coffee-dark shadow-[0_0_20px_rgba(255,215,0,0.3)]" 
+                      : "glass text-cream/40 hover:text-cream hover:border-white/20"
                   )}
                 >
-                  {option}
-                </div>
+                  {filter}
+                </button>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Filter Panel */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            className={cn(
-              "lg:w-64 flex-shrink-0 transition-all duration-500",
-              !isFilterOpen && "lg:w-12"
-            )}
-          >
-            <div className="glass rounded-[32px] p-8 sticky top-32 backdrop-blur-2xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="flex items-center justify-between mb-8">
-                <div className={cn("flex items-center gap-3", !isFilterOpen && "hidden")}>
-                  <Filter className="w-5 h-5 text-caramel" />
-                  <span className="font-bold text-cream uppercase tracking-widest text-sm">Filters</span>
-                </div>
-                <button 
-                  onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-caramel hover:text-coffee-dark transition-all"
-                >
-                  {isFilterOpen ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {isFilterOpen && (
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="text-[10px] font-bold text-cream/30 uppercase tracking-[0.3em] mb-4">Categories</h4>
-                    <div className="space-y-2">
-                      {filters.map(filter => (
-                        <motion.div
-                          key={filter}
-                          whileHover={{ x: 5 }}
-                          onClick={() => setActiveFilter(filter)}
-                          className={cn(
-                            "px-4 py-3 rounded-xl cursor-pointer transition-all flex items-center justify-between group",
-                            activeFilter === filter 
-                              ? "bg-caramel text-coffee-dark font-bold shadow-lg" 
-                              : "hover:bg-white/5 text-cream/60"
-                          )}
-                        >
-                          <span className="text-sm">{filter}</span>
-                          {activeFilter === filter && <Check className="w-4 h-4" />}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-white/5">
-                    <h4 className="text-[10px] font-bold text-cream/30 uppercase tracking-[0.3em] mb-4">Price Range</h4>
-                    <div className="px-2">
-                      <div className="h-1 w-full bg-white/10 rounded-full relative">
-                        <div className="absolute inset-y-0 left-0 right-1/4 bg-caramel rounded-full" />
-                        <div className="absolute top-1/2 left-0 -translate-y-1/2 w-4 h-4 bg-cream rounded-full border-2 border-caramel shadow-lg cursor-pointer" />
-                        <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-4 h-4 bg-cream rounded-full border-2 border-caramel shadow-lg cursor-pointer" />
-                      </div>
-                      <div className="flex justify-between mt-4 text-[10px] font-mono text-cream/40">
-                        <span>$0</span>
-                        <span>$200</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Product Grid */}
-          <div className="flex-grow">
-            <motion.div 
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"
-            >
-              <AnimatePresence mode="popLayout">
-                {sortedItems.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <CoffeeCard {...item} onAddToCart={onAddToCart} />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-
-            {sortedItems.length === 0 && (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Coffee className="w-10 h-10 text-cream/20" />
-                </div>
-                <h3 className="text-2xl font-bold text-cream mb-2">No results found</h3>
-                <p className="text-cream/40">Try adjusting your filters to find what you're looking for.</p>
-              </div>
-            )}
-          </div>
+        {/* Product Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
+          <AnimatePresence mode="popLayout">
+            {filteredItems.map((item, index) => (
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: index * 0.1,
+                  ease: [0.16, 1, 0.3, 1]
+                }}
+              >
+                <ShowcaseCard item={item} onAddToCart={onAddToCart} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
+
+        {filteredItems.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-40 text-center"
+          >
+            <p className="text-cream/20 font-mono text-sm uppercase tracking-[0.5em]">No blends found in this collection</p>
+          </motion.div>
+        )}
       </div>
     </div>
   );
@@ -925,8 +967,8 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
               {[
                 { label: "Origin", value: item.profile.origin, icon: MapPin },
                 { label: "Roast", value: item.profile.roast, icon: Coffee },
-                { label: "Body", value: item.profile.body, icon: Droplets },
-                { label: "Acidity", value: item.profile.acidity, icon: Zap },
+                { label: "Body", value: item.profile?.body || "Medium", icon: Droplets },
+                { label: "Acidity", value: item.profile?.acidity || "Balanced", icon: Zap },
               ].map((attr, i) => (
                 <div key={i} className="glass p-6 rounded-3xl border-white/5 hover:glow-border transition-all bg-white/5">
                   <attr.icon className="w-5 h-5 text-caramel mb-4" />
@@ -939,7 +981,7 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
             <section className="space-y-8">
               <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Flavor Profile</h3>
               <div className="flex flex-wrap gap-4">
-                {item.flavorNotes.map((note, i) => (
+                {(item.flavorNotes || ["Chocolate", "Caramel", "Nutty"]).map((note: string, i: number) => (
                   <motion.div 
                     key={i}
                     whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 215, 0, 0.1)" }}
@@ -954,7 +996,7 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
             <section className="space-y-8">
               <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Recommended Brewing</h3>
               <div className="flex gap-10">
-                {item.brewingMethods.map((method, i) => {
+                {(item.brewingMethods || ["V60", "Espresso"]).map((method: string, i: number) => {
                   const MethodIcon = method.includes('V60') ? Wind : 
                                    method.includes('Chemex') ? FlaskConical :
                                    method.includes('Aeropress') ? Cylinder :
@@ -1213,123 +1255,125 @@ export function TrackingPage() {
 export const LISTINGS = [
   {
     id: "1",
-    title: "Ethiopian Yirgacheffe",
+    title: "ASSAVA NOIR",
     location: "Sidamo Highlands",
     rating: 4.9,
     reviews: 128,
     price: "$42.00",
     oldPrice: "$55.00",
-    tag: "Brew",
-    image: "https://picsum.photos/seed/coffee1/800/600",
-    description: "In the high-altitude Sidamo region, the Yirgacheffe harvest is a ritual of patience. Each cherry is hand-picked at the peak of ripeness, then washed in the mineral-rich waters of the highlands. The result is a cup that dances with floral elegance and citrus clarity.",
+    tag: "Espresso",
+    image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=800",
+    description: "A deep, mysterious roast with notes of dark chocolate and midnight jasmine.",
     profile: {
       origin: "Ethiopia",
-      roast: "Light",
-      body: "Tea-like",
-      acidity: "Bright & Citric"
+      roast: "Dark",
+      type: "Single Origin",
+      body: "Full",
+      acidity: "Bright"
     },
-    flavorNotes: ["Jasmine", "Lemon Zest", "Bergamot", "Honey"],
-    brewingMethods: ["V60", "Chemex", "Aeropress"]
+    flavorNotes: ["Dark Chocolate", "Midnight Jasmine", "Black Cherry"],
+    brewingMethods: ["Espresso", "V60", "Moka Pot"]
   },
   {
     id: "2",
-    title: "The Velvet Room",
+    title: "VELVET ETHEREAL",
     location: "Milan, Italy",
     rating: 4.8,
     reviews: 256,
     price: "$38.00",
     oldPrice: "$45.00",
-    tag: "Instant",
-    image: "https://picsum.photos/seed/cafe1/800/600",
-    description: "A tribute to the grand espresso bars of Milan. This blend is engineered for texture—a thick, syrupy body with a crema that holds its own. It's a dark, mysterious journey through chocolate and toasted hazelnuts.",
+    tag: "Brew",
+    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=800",
+    description: "Silky smooth texture with a lingering sweetness of toasted hazelnuts.",
     profile: {
-      origin: "Brazil & Sumatra",
-      roast: "Dark",
-      body: "Full & Syrupy",
-      acidity: "Low & Smooth"
+      origin: "Brazil",
+      roast: "Medium",
+      type: "Blend",
+      body: "Medium",
+      acidity: "Balanced"
     },
-    flavorNotes: ["Dark Chocolate", "Hazelnut", "Molasses", "Smoke"],
-    brewingMethods: ["Espresso", "Moka Pot", "French Press"]
+    flavorNotes: ["Hazelnut", "Caramel", "Milk Chocolate"],
+    brewingMethods: ["V60", "Chemex", "Aeropress"]
   },
   {
     id: "3",
-    title: "Geisha Special Reserve",
+    title: "GOLDEN GEISHA",
     location: "Panama Valley",
     rating: 5.0,
     reviews: 64,
     price: "$120.00",
     oldPrice: "$150.00",
     tag: "Brew",
-    image: "https://picsum.photos/seed/coffee2/800/600",
-    description: "The crown jewel of the coffee world. Grown on the slopes of Volcán Barú, this Geisha lot is a masterclass in complexity. It defies traditional coffee profiles, offering a sensory experience more akin to a fine white wine or a bouquet of rare flowers.",
+    image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=800",
+    description: "The crown jewel of ASSAVA. Sparkling acidity with peach blossom notes.",
     profile: {
       origin: "Panama",
-      roast: "Ultra-Light",
-      body: "Ethereal",
-      acidity: "Sparkling"
+      roast: "Light",
+      type: "Special Reserve",
+      body: "Light",
+      acidity: "High"
     },
-    flavorNotes: ["Peach Blossom", "Mango", "Earl Grey", "Rose Water"],
-    brewingMethods: ["V60", "Siphon", "Kalita Wave"]
+    flavorNotes: ["Peach Blossom", "Bergamot", "Honey"],
+    brewingMethods: ["V60", "Chemex", "Siphon"]
   },
   {
     id: "4",
-    title: "Obsidian Roastery",
+    title: "OBSIDIAN MIST",
     location: "Tokyo, Japan",
     rating: 4.7,
     reviews: 89,
     price: "$45.00",
     oldPrice: "$52.00",
-    tag: "Brew",
-    image: "https://picsum.photos/seed/cafe2/800/600",
-    description: "Inspired by the minimalist aesthetics of Tokyo, this roast is clean, precise, and uncompromising. We use a slow-roasting technique to develop deep sweetness without any bitterness, resulting in a cup as clear as obsidian glass.",
+    tag: "Instant",
+    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=800",
+    description: "Clean, precise, and uncompromising. A masterclass in minimalist roasting.",
     profile: {
       origin: "Guatemala",
       roast: "Medium",
-      body: "Balanced",
-      acidity: "Winey"
+      type: "Artisan",
+      body: "Medium",
+      acidity: "Balanced"
     },
-    flavorNotes: ["Red Apple", "Caramel", "Milk Chocolate", "Almond"],
-    brewingMethods: ["Hario V60", "Nel Drip", "Cold Brew"]
+    flavorNotes: ["Green Apple", "Almond", "Cane Sugar"],
+    brewingMethods: ["Aeropress", "V60", "French Press"]
   },
   {
     id: "5",
-    title: "Cold Brew Ritual",
+    title: "BROOKLYN RITUAL",
     location: "Brooklyn, NY",
     rating: 4.6,
     reviews: 112,
     price: "$18.00",
     oldPrice: "$22.00",
-    tag: "Instant",
-    image: "https://picsum.photos/seed/coffee3/800/600",
-    description: "Engineered for the 18-hour steep. This coarse-ground blend is optimized for cold extraction, pulling out deep cocoa notes and a natural sweetness that requires no sugar. It's the ultimate urban refreshment.",
+    tag: "Brew",
+    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&q=80&w=800",
+    description: "Optimized for the 18-hour steep. Deep cocoa and natural sweetness.",
     profile: {
       origin: "Colombia",
       roast: "Medium-Dark",
+      type: "Cold Brew",
       body: "Heavy",
-      acidity: "Muted"
+      acidity: "Low"
     },
-    flavorNotes: ["Cocoa Nibs", "Brown Sugar", "Vanilla Bean", "Toasted Oak"],
-    brewingMethods: ["Cold Brew", "French Press", "Toddy"]
+    flavorNotes: ["Cocoa", "Molasses", "Walnut"],
+    brewingMethods: ["Cold Brew", "French Press", "Aeropress"]
   },
   {
     id: "6",
-    title: "The Alchemist's Cup",
+    title: "ALCHEMIST'S AMBER",
     location: "London, UK",
     rating: 4.9,
     reviews: 76,
     price: "$55.00",
     oldPrice: "$68.00",
-    tag: "Brew",
-    image: "https://picsum.photos/seed/cafe3/800/600",
-    description: "A experimental lot processed using anaerobic fermentation. This process creates wild, funky flavors that challenge your perception of what coffee can be. It's a scientific breakthrough in a cup.",
+    tag: "Espresso",
+    image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=800",
+    description: "Experimental anaerobic fermentation results in wild, funky strawberry notes.",
     profile: {
       origin: "Costa Rica",
       roast: "Light-Medium",
-      body: "Creamy",
-      acidity: "Tart & Complex"
-    },
-    flavorNotes: ["Strawberry", "Cinnamon", "Wine Grapes", "Cream"],
-    brewingMethods: ["Aeropress", "V60", "Clever Dripper"]
+      type: "Experimental"
+    }
   }
 ];
 
