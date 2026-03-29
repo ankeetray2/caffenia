@@ -8,12 +8,8 @@ export function BeanCluster() {
   const scrollY = useRef(0);
   const groupRef = useRef<THREE.Group>(null);
   
-  // Load multiple realistic coffee bean textures for variety
-  const textures = useTexture([
-    'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=500',
-    'https://images.unsplash.com/photo-1580915411954-282cb1b0d780?auto=format&fit=crop&q=80&w=500',
-    'https://images.unsplash.com/photo-1611854779393-1b2da9d400fe?auto=format&fit=crop&q=80&w=500'
-  ]);
+  // Load a single reliable realistic macro coffee bean texture
+  const texture = useTexture('https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=500');
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -31,13 +27,13 @@ export function BeanCluster() {
     };
   }, []);
 
-  const beansCount = 45;
+  const beansCount = 80;
   const beans = useMemo(() => {
     const b = [];
     for (let i = 0; i < beansCount; i++) {
       const phi = Math.acos(-1 + (2 * i) / beansCount);
       const theta = Math.sqrt(beansCount * Math.PI) * phi;
-      const radius = 3.2 + Math.random() * 1.2;
+      const radius = 3.5 + Math.random() * 2; // Move further out
       
       b.push({
         initialPos: new THREE.Vector3(
@@ -45,14 +41,13 @@ export function BeanCluster() {
           radius * Math.sin(theta) * Math.sin(phi),
           radius * Math.cos(phi)
         ),
-        scale: 0.18 + Math.random() * 0.12,
+        scale: 0.5 + Math.random() * 0.4, // Much larger
         rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
-        speed: 0.15 + Math.random() * 0.4,
-        textureIndex: i % textures.length
+        speed: 0.1 + Math.random() * 0.3,
       });
     }
     return b;
-  }, [textures.length]);
+  }, []);
 
   useFrame((state) => {
     if (groupRef.current) {
@@ -66,11 +61,13 @@ export function BeanCluster() {
 
   return (
     <group ref={groupRef}>
+      {/* Sun-like directional light */}
+      <directionalLight position={[5, 5, 5]} intensity={3} color="#FFD700" />
       {/* Rim light for cinematic effect */}
-      <pointLight position={[0, 0, -5]} intensity={2} color="#C68E5D" />
+      <pointLight position={[0, 0, -5]} intensity={4} color="#FFA500" />
       <MouseLight mouse={mouse} />
       {beans.map((bean, i) => (
-        <ClusterBean key={i} {...bean} mouse={mouse} scrollY={scrollY} texture={textures[bean.textureIndex]} />
+        <ClusterBean key={i} {...bean} mouse={mouse} scrollY={scrollY} texture={texture} />
       ))}
     </group>
   );
@@ -90,11 +87,11 @@ function MouseLight({ mouse }: { mouse: React.MutableRefObject<THREE.Vector2> })
   return (
     <spotLight 
       ref={lightRef} 
-      intensity={3} 
-      distance={25} 
-      angle={0.5} 
+      intensity={15} 
+      distance={40} 
+      angle={0.8} 
       penumbra={1} 
-      color="#FFD700" 
+      color="#FFA500" 
       castShadow={false}
     />
   );
@@ -123,23 +120,34 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
     const dispersion = scrollY.current * 0.003;
     const finalTarget = initialPos.clone().multiplyScalar(expansionFactor + dispersion);
     
-    if (repulsionStrength > 0) {
-      const localRepulsion = repulsionDir.applyQuaternion(groupRef.current.parent!.quaternion.clone().invert());
-      finalTarget.add(localRepulsion.multiplyScalar(repulsionStrength));
+    if (repulsionStrength > 0 && groupRef.current && groupRef.current.parent) {
+      const parentQuaternion = groupRef.current.parent.quaternion;
+      if (parentQuaternion) {
+        const localRepulsion = repulsionDir.applyQuaternion(parentQuaternion.clone().invert());
+        finalTarget.add(localRepulsion.multiplyScalar(repulsionStrength));
+      }
     }
     
     groupRef.current.position.lerp(finalTarget, 0.04);
-    groupRef.current.rotation.x += 0.002 * speed + (dist < 3 ? 0.02 : 0);
-    groupRef.current.rotation.y += 0.002 * speed + (dist < 3 ? 0.02 : 0);
+    groupRef.current.rotation.x += 0.01 * speed + (dist < 3 ? 0.04 : 0);
+    groupRef.current.rotation.y += 0.01 * speed + (dist < 3 ? 0.04 : 0);
+    groupRef.current.rotation.z += 0.005 * speed;
     
     // Update emissive intensity for all materials in the group
-    groupRef.current.children.forEach((child: any) => {
-      if (child.material) {
-        const glow = Math.max(0, 1 - dist * 0.2) * (isNearCluster ? 1.2 : 1);
-        child.material.emissiveIntensity = 0.15 + glow * 1.8;
-        child.material.emissive.set(glow > 0.35 ? "#C68E5D" : "#1a0f0a");
-      }
-    });
+    if (groupRef.current) {
+      groupRef.current.children.forEach((child: any) => {
+        if (child.material) {
+          const materials = Array.isArray(child.material) ? child.material : [child.material];
+          materials.forEach((mat: any) => {
+            if (mat && mat.emissive) {
+              const glow = Math.max(0, 1 - dist * 0.2) * (isNearCluster ? 1.2 : 1);
+              mat.emissiveIntensity = 0.5 + glow * 2.5;
+              mat.emissive.set(glow > 0.3 ? "#FFD700" : "#4E342E");
+            }
+          });
+        }
+      });
+    }
   });
 
   return (
@@ -149,11 +157,13 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
         <sphereGeometry args={[1, 32, 32]} />
         <meshStandardMaterial 
           map={texture}
-          color="#3E2723" 
-          roughness={0.4} 
-          metalness={0.3} 
-          emissive="#1a0f0a"
-          emissiveIntensity={0.15}
+          bumpMap={texture}
+          bumpScale={0.04}
+          color="#8D6E63" 
+          roughness={0.35} 
+          metalness={0.25} 
+          emissive="#4E342E"
+          emissiveIntensity={0.5}
         />
       </mesh>
       {/* Right Half of the bean */}
@@ -161,11 +171,13 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
         <sphereGeometry args={[1, 32, 32]} />
         <meshStandardMaterial 
           map={texture}
-          color="#3E2723" 
-          roughness={0.4} 
-          metalness={0.3} 
-          emissive="#1a0f0a"
-          emissiveIntensity={0.15}
+          bumpMap={texture}
+          bumpScale={0.04}
+          color="#8D6E63" 
+          roughness={0.35} 
+          metalness={0.25} 
+          emissive="#4E342E"
+          emissiveIntensity={0.5}
         />
       </mesh>
     </group>
@@ -173,13 +185,13 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
 }
 
 
-export function CoffeeBean({ position, rotation, scale }: { position: [number, number, number], rotation: [number, number, number], scale: number }) {
+export function CoffeeBean({ position, rotation, scale, texture }: { position: [number, number, number], rotation: [number, number, number], scale: number, texture?: THREE.Texture }) {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.x += 0.005;
-      meshRef.current.rotation.y += 0.005;
+      meshRef.current.rotation.x += 0.015;
+      meshRef.current.rotation.y += 0.015;
     }
   });
 
@@ -188,24 +200,25 @@ export function CoffeeBean({ position, rotation, scale }: { position: [number, n
       <mesh ref={meshRef} position={position} rotation={rotation} scale={[scale, scale * 1.5, scale * 0.8]}>
         <sphereGeometry args={[1, 32, 32]} />
         <meshStandardMaterial 
-          color="#3E2723" 
+          map={texture}
+          color="#8D6E63" 
           roughness={0.3} 
           metalness={0.2} 
-          emissive="#1a0f0a"
-          emissiveIntensity={0.5}
+          emissive="#FFA500"
+          emissiveIntensity={1.2}
         />
       </mesh>
     </Float>
   );
 }
 
-export function CoffeeDust({ count = 300 }) {
+export function CoffeeDust({ count = 600 }) {
   const points = useMemo(() => {
     const p = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 25;
-      p[i * 3 + 1] = (Math.random() - 0.5) * 25;
-      p[i * 3 + 2] = (Math.random() - 0.5) * 15;
+      p[i * 3] = (Math.random() - 0.5) * 30;
+      p[i * 3 + 1] = (Math.random() - 0.5) * 30;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 20;
     }
     return p;
   }, [count]);
@@ -214,8 +227,9 @@ export function CoffeeDust({ count = 300 }) {
 
   useFrame((state) => {
     if (meshRef.current) {
-      meshRef.current.rotation.y += 0.001;
-      meshRef.current.position.setY(Math.sin(state.clock.getElapsedTime() * 0.5) * 0.2);
+      meshRef.current.rotation.y += 0.0008;
+      meshRef.current.rotation.x += 0.0004;
+      meshRef.current.position.setY(Math.sin(state.clock.getElapsedTime() * 0.3) * 0.3);
     }
   });
 
@@ -231,39 +245,43 @@ export function CoffeeDust({ count = 300 }) {
       </bufferGeometry>
       <pointsMaterial
         transparent
-        color="#C68E5D"
-        size={0.08}
+        color="#D4AF37"
+        size={0.05}
         sizeAttenuation={true}
         depthWrite={false}
-        opacity={0.3}
+        opacity={0.4}
       />
     </points>
   );
 }
 
-export function CoffeeSteam({ count = 50 }) {
+export function CoffeeSteam({ count = 40 }) {
   const meshRef = useRef<THREE.Group>(null);
   
   const particles = useMemo(() => {
     const p = [];
     for (let i = 0; i < count; i++) {
       p.push({
-        x: (Math.random() - 0.5) * 2,
-        y: Math.random() * 5,
-        z: (Math.random() - 0.5) * 2,
-        speed: 0.01 + Math.random() * 0.02,
-        opacity: 0.1 + Math.random() * 0.3
+        x: (Math.random() - 0.5) * 4,
+        y: Math.random() * 8,
+        z: (Math.random() - 0.5) * 4,
+        speed: 0.005 + Math.random() * 0.01,
+        opacity: 0.05 + Math.random() * 0.15,
+        scale: 0.2 + Math.random() * 0.8
       });
     }
     return p;
   }, [count]);
 
   useFrame((state) => {
-    if (meshRef.current) {
+    if (meshRef.current && particles.length > 0) {
       meshRef.current.children.forEach((child, i) => {
-        child.position.y += particles[i].speed;
-        if (child.position.y > 5) child.position.y = 0;
-        child.rotation.y += 0.01;
+        if (particles[i]) {
+          child.position.y += particles[i].speed;
+          child.position.x += Math.sin(state.clock.getElapsedTime() + i) * 0.005;
+          if (child.position.y > 8) child.position.y = 0;
+          child.rotation.y += 0.005;
+        }
       });
     }
   });
@@ -271,14 +289,15 @@ export function CoffeeSteam({ count = 50 }) {
   return (
     <group ref={meshRef}>
       {particles.map((p, i) => (
-        <mesh key={i} position={[p.x, p.y, p.z]}>
-          <sphereGeometry args={[0.1, 8, 8]} />
+        <mesh key={i} position={[p.x, p.y, p.z]} scale={[p.scale, p.scale, p.scale]}>
+          <sphereGeometry args={[0.2, 16, 16]} />
           <meshStandardMaterial 
-            color="#F5E6D3" 
+            color="#FFF4E0" 
             transparent 
             opacity={p.opacity} 
-            emissive="#F5E6D3"
+            emissive="#FFD700"
             emissiveIntensity={0.2}
+            depthWrite={false}
           />
         </mesh>
       ))}
@@ -286,19 +305,135 @@ export function CoffeeSteam({ count = 50 }) {
   );
 }
 
+export function FieryParticles({ count = 100 }) {
+  const points = useMemo(() => {
+    const p = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 10;
+      p[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    return p;
+  }, [count]);
+
+  const meshRef = useRef<THREE.Points>(null);
+
+  useFrame((state) => {
+    if (meshRef.current && meshRef.current.geometry && meshRef.current.geometry.attributes.position) {
+      const time = state.clock.getElapsedTime();
+      meshRef.current.rotation.y = time * 0.2;
+      meshRef.current.position.y = Math.sin(time * 0.5) * 0.2;
+      
+      const positions = meshRef.current.geometry.attributes.position.array as Float32Array;
+      if (positions) {
+        for (let i = 0; i < count; i++) {
+          positions[i * 3 + 1] += Math.sin(time + i) * 0.01;
+        }
+        meshRef.current.geometry.attributes.position.needsUpdate = true;
+      }
+    }
+  });
+
+  return (
+    <points ref={meshRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={points.length / 3}
+          array={points}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        transparent
+        color="#FF4500"
+        size={0.15}
+        sizeAttenuation={true}
+        blending={THREE.AdditiveBlending}
+        opacity={0.6}
+      />
+    </points>
+  );
+}
+
+export function ExplodingHeroBean() {
+  const beanRef = useRef<THREE.Group>(null);
+  const texture = useTexture('https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=500');
+
+  useFrame((state) => {
+    if (beanRef.current) {
+      const time = state.clock.getElapsedTime();
+      beanRef.current.rotation.x = Math.sin(time * 0.5) * 0.2;
+      beanRef.current.rotation.y = time * 0.3;
+      beanRef.current.position.y = Math.sin(time * 1.5) * 0.1;
+    }
+  });
+
+  return (
+    <group ref={beanRef}>
+      <Float speed={4} rotationIntensity={2} floatIntensity={2}>
+        <group scale={2.5}>
+          {/* Main Bean Body with Fiery Glow */}
+          <mesh position={[-0.08, 0, 0]} scale={[0.85, 1.4, 0.65]}>
+            <sphereGeometry args={[1, 32, 32]} />
+            <meshStandardMaterial 
+              map={texture}
+              color="#4E342E" 
+              roughness={0.2} 
+              metalness={0.8} 
+              emissive="#FF4500"
+              emissiveIntensity={2.5}
+            />
+          </mesh>
+          <mesh position={[0.08, 0, 0]} scale={[0.85, 1.4, 0.65]}>
+            <sphereGeometry args={[1, 32, 32]} />
+            <meshStandardMaterial 
+              map={texture}
+              color="#4E342E" 
+              roughness={0.2} 
+              metalness={0.8} 
+              emissive="#FF4500"
+              emissiveIntensity={2.5}
+            />
+          </mesh>
+        </group>
+      </Float>
+      
+      {/* Explosive Aura */}
+      <Sphere args={[3, 32, 32]} scale={1.5}>
+        <meshStandardMaterial 
+          color="#FF8C00" 
+          transparent 
+          opacity={0.1} 
+          emissive="#FF4500" 
+          emissiveIntensity={5} 
+          side={THREE.BackSide}
+        />
+      </Sphere>
+      
+      <FieryParticles count={300} />
+      
+      {/* Intense Point Lights to simulate fire explosion */}
+      <pointLight position={[2, 2, 2]} intensity={20} color="#FF4500" />
+      <pointLight position={[-2, -2, 2]} intensity={15} color="#FF8C00" />
+      <pointLight position={[0, 0, -2]} intensity={10} color="#FFD700" />
+    </group>
+  );
+}
+
 export function LiquidBlob() {
   return (
-    <Float speed={4} rotationIntensity={0.5} floatIntensity={1}>
-      <Sphere args={[1, 100, 100]} scale={2.5} position={[0, -1, -2]}>
+    <Float speed={3} rotationIntensity={0.3} floatIntensity={0.8}>
+      <Sphere args={[1, 64, 64]} scale={2.8} position={[0, -2, -8]}>
         <MeshDistortMaterial
-          color="#3E2723"
-          speed={3}
-          distort={0.4}
+          color="#2B1B12"
+          speed={2.5}
+          distort={0.5}
           radius={1}
-          metalness={0.5}
-          roughness={0.2}
-          emissive="#2B1B12"
-          emissiveIntensity={0.5}
+          metalness={0.6}
+          roughness={0.1}
+          emissive="#FFA500"
+          emissiveIntensity={0.4}
         />
       </Sphere>
     </Float>

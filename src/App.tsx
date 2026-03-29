@@ -20,6 +20,7 @@ import {
   LoadingScreen,
   LISTINGS
 } from './components/CoffeeComponents';
+import { CoffeeImageGenerator } from './components/CoffeeImageGenerator';
 import { Coffee } from 'lucide-react';
 
 function HomePage() {
@@ -119,15 +120,17 @@ function PageWrapper() {
       infinite: false,
     });
 
+    let rafId: number;
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
       lenis.destroy();
+      cancelAnimationFrame(rafId);
     };
   }, [isLoading]);
 
@@ -169,6 +172,7 @@ function PageWrapper() {
                 <Route path="/orderHistory" element={<OrderHistoryPage />} />
                 <Route path="/tracking" element={<TrackingPage />} />
                 <Route path="/coffeeDetail/:id" element={<CoffeeDetailPage onAddToCart={addToCart} />} />
+                <Route path="/studio" element={<CoffeeImageGenerator />} />
               </Routes>
             </AnimatePresence>
 

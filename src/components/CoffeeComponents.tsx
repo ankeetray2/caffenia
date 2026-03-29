@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import { Search, Coffee, MapPin, Star, ArrowRight, Menu, X, User, ShoppingCart, Settings, Package, LogOut, ChevronRight, Filter, Check, Droplets, Zap, FlaskConical, Wind, Cylinder, Flame, ChevronDown, Plus } from 'lucide-react';
 import { Canvas } from '@react-three/fiber';
+import { useTexture, Preload } from '@react-three/drei';
 import { EffectComposer, Bloom, DepthOfField, Vignette } from '@react-three/postprocessing';
-import { CoffeeBean, CoffeeDust, CoffeeSteam, LiquidBlob, BeanCluster } from './ThreeScene';
+import { CoffeeBean, CoffeeDust, CoffeeSteam, LiquidBlob, BeanCluster, ExplodingHeroBean, FieryParticles } from './ThreeScene';
 import { cn } from '../lib/utils';
 import { Link, useLocation, useParams } from 'react-router-dom';
 
@@ -36,6 +37,7 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
           <button onClick={onOpenCategories} className="hover:text-gold transition-colors flex items-center gap-1">
             Categories <Filter className="w-3 h-3" />
           </button>
+          <Link to="/studio" className={cn("hover:text-gold transition-colors", location.pathname === "/studio" && "text-gold")}>Studio</Link>
           <Link to="/about" className={cn("hover:text-gold transition-colors", location.pathname === "/about" && "text-gold")}>Story</Link>
         </div>
 
@@ -55,25 +57,60 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
 }
 
 // --- Hero Section ---
+function FloatingBeans() {
+  const beanTexture = useTexture('https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=500');
+  
+  return (
+    <>
+      <CoffeeBean position={[-4, 2, -2]} rotation={[0.4, 0.2, 0.5]} scale={0.2} texture={beanTexture} />
+      <CoffeeBean position={[5, -3, -1]} rotation={[1.2, 0.5, 0.1]} scale={0.25} texture={beanTexture} />
+      <CoffeeBean position={[-6, -4, -3]} rotation={[0.1, 0.8, 0.9]} scale={0.18} texture={beanTexture} />
+      <CoffeeBean position={[7, 4, -5]} rotation={[0.5, 0.5, 0.5]} scale={0.22} texture={beanTexture} />
+      <CoffeeBean position={[-8, 1, -4]} rotation={[0.2, 0.9, 0.1]} scale={0.15} texture={beanTexture} />
+      <CoffeeBean position={[2, 5, -6]} rotation={[0.8, 0.1, 0.4]} scale={0.2} texture={beanTexture} />
+    </>
+  );
+}
+
 export function Hero() {
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
-          <ambientLight intensity={0.4} />
-          <pointLight position={[10, 10, 10]} intensity={1.5} color="#FFD700" />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#C68E5D" />
-          <CoffeeDust count={400} />
-          <BeanCluster />
-          <LiquidBlob />
-          
-          <EffectComposer>
-            <DepthOfField focusDistance={0.012} focalLength={0.015} bokehScale={3} height={480} />
-            <Bloom intensity={2} luminanceThreshold={0.15} luminanceSmoothing={0.9} height={300} />
-            <Vignette eskil={false} offset={0.1} darkness={1.1} />
-          </EffectComposer>
-        </Canvas>
+        <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center bg-coffee-dark/20 text-caramel/50 font-mono text-xs tracking-widest uppercase">Loading Cinematic Scene...</div>}>
+          <Canvas 
+            gl={{ 
+              antialias: true, 
+              alpha: true,
+              powerPreference: "high-performance",
+              preserveDrawingBuffer: true
+            }}
+            camera={{ position: [0, 0, 8], fov: 45 }}
+            dpr={[1, 2]}
+          >
+            <Suspense fallback={null}>
+              <ambientLight intensity={0.4} />
+              <pointLight position={[10, 10, 10]} intensity={5} color="#FF4500" />
+              <pointLight position={[-10, -10, -10]} intensity={3} color="#C68E5D" />
+              <pointLight position={[0, 0, 5]} intensity={2} color="#FFFFFF" />
+              <CoffeeDust count={200} />
+              <FieryParticles count={150} />
+              <ExplodingHeroBean />
+              <FloatingBeans />
+              <Preload all />
+            </Suspense>
+            
+            <EffectComposer multisampling={0}>
+              <Bloom 
+                intensity={1.5} 
+                luminanceThreshold={0.2} 
+                luminanceSmoothing={0.9} 
+                mipmapBlur
+              />
+              <Vignette eskil={false} offset={0.1} darkness={1.1} />
+            </EffectComposer>
+          </Canvas>
+        </Suspense>
       </div>
 
       {/* Content */}
@@ -89,14 +126,14 @@ export function Hero() {
             transition={{ duration: 2, delay: 0.5 }}
             className="text-gold font-mono text-[10px] uppercase block mb-8 font-bold"
           >
-            EST. 2026
+            THE ULTIMATE AWAKENING
           </motion.span>
-          <h1 className="text-7xl md:text-[10vw] font-bold tracking-tighter mb-8 leading-[0.8] text-glow uppercase">
-            The <br />
-            <span className="text-caramel italic serif lowercase">Ritual</span>
+          <h1 className="text-7xl md:text-[12vw] font-bold tracking-tighter mb-8 leading-[0.8] text-glow uppercase text-white">
+            Ignite <br />
+            <span className="text-caramel italic serif lowercase">The Soul</span>
           </h1>
-          <p className="text-cream/40 text-lg md:text-2xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
-            Immersive coffee discovery through cinematic design and rare harvests.
+          <p className="text-cream/60 text-lg md:text-2xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+            Experience the explosive intensity of our volcanic-grown beans, roasted to perfection.
           </p>
           
           <motion.div
@@ -344,7 +381,7 @@ export function AccountDashboard() {
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -591,7 +628,7 @@ export function SearchPage() {
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -654,7 +691,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -808,7 +845,7 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -819,13 +856,15 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
           {/* Left: 3D Model Placeholder */}
           <div className="sticky top-32">
             <div className="relative h-[600px] glass rounded-[60px] overflow-hidden group shadow-[0_0_50px_rgba(0,0,0,0.3)] bg-white/5 border border-white/10">
-               <Canvas camera={{ position: [0, 0, 5] }}>
-                 <ambientLight intensity={0.5} />
-                 <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
-                 <CoffeeDust count={200} />
-                 <CoffeeSteam count={30} />
-                 <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={1.8} />
-                 <LiquidBlob />
+               <Canvas gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }} camera={{ position: [0, 0, 5] }} dpr={[1, 2]}>
+                 <Suspense fallback={null}>
+                   <ambientLight intensity={0.5} />
+                   <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
+                   <CoffeeDust count={200} />
+                   <CoffeeSteam count={30} />
+                   <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={1.8} />
+                   <LiquidBlob />
+                 </Suspense>
                </Canvas>
                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                  Interactive 3D Harvest
@@ -969,7 +1008,7 @@ export function ThankYouPage() {
     <div className="min-h-screen bg-coffee-dark flex items-center justify-center text-center px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -981,11 +1020,13 @@ export function ThankYouPage() {
         className="max-w-2xl relative z-10 glass p-16 rounded-[60px] border border-white/10 shadow-2xl backdrop-blur-3xl"
       >
         <div className="relative w-48 h-48 mx-auto mb-12">
-          <Canvas camera={{ position: [0, 0, 5] }}>
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
-            <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
-            <CoffeeSteam count={20} />
+          <Canvas gl={{ antialias: true, alpha: true }} camera={{ position: [0, 0, 5] }} dpr={[1, 2]}>
+            <Suspense fallback={null}>
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} intensity={1} color="#FFD700" />
+              <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
+              <CoffeeSteam count={20} />
+            </Suspense>
           </Canvas>
           <motion.div 
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
@@ -1031,7 +1072,7 @@ export function OrderHistoryPage() {
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -1098,7 +1139,7 @@ export function TrackingPage() {
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -1381,7 +1422,7 @@ export function CategoryPage() {
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Canvas camera={{ position: [0, 0, 5] }}>
+        <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
           <CoffeeDust />
           <LiquidBlob />
         </Canvas>
@@ -1464,12 +1505,14 @@ export function ScrollStory() {
 
         {/* Dynamic Visuals */}
         <div className="absolute inset-0 z-0 opacity-30">
-           <Canvas camera={{ position: [0, 0, 5] }}>
-             <ambientLight intensity={0.5} />
-             <pointLight position={[10, 10, 10]} intensity={1} color="#C68E5D" />
-             <CoffeeDust count={400} />
-             <LiquidBlob />
-             <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
+           <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
+             <Suspense fallback={null}>
+               <ambientLight intensity={0.5} />
+               <pointLight position={[10, 10, 10]} intensity={1} color="#C68E5D" />
+               <CoffeeDust count={400} />
+               <LiquidBlob />
+               <CoffeeBean position={[0, 0, 0]} rotation={[0, 0, 0]} scale={2} />
+             </Suspense>
            </Canvas>
         </div>
 
