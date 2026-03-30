@@ -7,10 +7,13 @@ import { EffectComposer, Bloom, DepthOfField, Vignette } from '@react-three/post
 import { CoffeeBean, CoffeeDust, CoffeeSteam, LiquidBlob, BeanCluster, ExplodingHeroBean, FieryParticles } from './ThreeScene';
 import { cn } from '../lib/utils';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { PRODUCTS } from '../constants';
+import { Product } from '../types';
 
 // --- Navbar ---
-export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => void, onOpenCategories: () => void }) {
+export function Navbar({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -19,40 +22,129 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: 'Experience', path: '/' },
+    { name: 'Shop', path: '/shopping' },
+    { name: 'Categories', onClick: onOpenCategories },
+    { name: 'Story', path: '/about' },
+    { name: 'Account', path: '/account' },
+  ];
+
   return (
-    <nav className={cn(
-      "fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 py-4",
-      isScrolled ? "glass py-3" : "bg-transparent"
-    )}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)] group-hover:scale-110 transition-transform">
-            <Coffee className="text-coffee-dark w-6 h-6" />
-          </div>
-          <span className="text-xl font-bold tracking-tighter text-cream/60 uppercase">ASSAVA</span>
-        </Link>
-
-        <div className="hidden md:flex items-center gap-8 text-[9px] font-bold uppercase tracking-[0.3em] text-cream/50">
-          <Link to="/" className={cn("hover:text-cream transition-colors", location.pathname === "/" && "text-cream")}>Experience</Link>
-          <Link to="/shopping" className={cn("hover:text-cream transition-colors", location.pathname === "/shopping" && "text-cream")}>Shop</Link>
-          <button onClick={onOpenCategories} className="hover:text-cream transition-colors flex items-center gap-1">
-            Categories <Filter className="w-3 h-3" />
-          </button>
-          <Link to="/about" className={cn("hover:text-cream transition-colors", location.pathname === "/about" && "text-cream")}>Story</Link>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button onClick={onOpenCart} className="relative p-2 hover:bg-white/10 rounded-full transition-colors group">
-            <ShoppingCart className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-caramel text-coffee-dark text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
-          </button>
-          <Link to="/account" className="flex items-center gap-2 glass px-4 py-2 rounded-full text-sm font-semibold hover:glow-border transition-all">
-            <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Account</span>
+    <>
+      <nav className={cn(
+        "fixed top-0 left-0 w-full z-50 transition-all duration-500 px-6 py-4",
+        isScrolled ? "glass py-3" : "bg-transparent"
+      )}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)] group-hover:scale-110 transition-transform">
+              <Coffee className="text-coffee-dark w-6 h-6" />
+            </div>
+            <span className="text-xl font-bold tracking-tighter text-cream uppercase">ASSAVA</span>
           </Link>
+
+          <div className="hidden md:flex items-center gap-8 text-[9px] font-bold uppercase tracking-[0.3em] text-cream/80">
+            {navLinks.slice(0, 4).map((link) => (
+              link.path ? (
+                <Link 
+                  key={link.name}
+                  to={link.path} 
+                  className={cn("hover:text-cream transition-colors", location.pathname === link.path && "text-cream")}
+                >
+                  {link.name}
+                </Link>
+              ) : (
+                <button 
+                  key={link.name}
+                  onClick={link.onClick} 
+                  className="hover:text-cream transition-colors flex items-center gap-1"
+                >
+                  {link.name} <Filter className="w-3 h-3" />
+                </button>
+              )
+            ))}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button onClick={onOpenCart} className="relative p-2 hover:bg-cream/10 rounded-full transition-colors group">
+              <ShoppingCart className="w-5 h-5" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-caramel text-coffee-dark text-[10px] font-bold rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            </button>
+            <Link to="/account" className="hidden sm:flex items-center gap-2 glass px-4 py-2 rounded-full text-sm font-semibold hover:glow-border transition-all">
+              <User className="w-4 h-4" />
+              <span>Account</span>
+            </Link>
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden p-2 hover:bg-cream/10 rounded-full transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-[100] mobile-nav flex flex-col p-10"
+          >
+            <div className="flex justify-between items-center mb-20">
+              <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center">
+                  <Coffee className="text-coffee-dark w-6 h-6" />
+                </div>
+                <span className="text-xl font-bold tracking-tighter text-cream uppercase">ASSAVA</span>
+              </Link>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-3 hover:bg-cream/10 rounded-full transition-colors"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-8">
+              {navLinks.map((link, i) => (
+                <motion.div
+                  key={link.name}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  {link.path ? (
+                    <Link 
+                      to={link.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-4xl font-bold tracking-tighter uppercase hover:text-caramel transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        link.onClick?.();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="text-4xl font-bold tracking-tighter uppercase hover:text-caramel transition-colors text-left"
+                    >
+                      {link.name}
+                    </button>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -74,7 +166,7 @@ function FloatingBeans() {
 
 export function Hero() {
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-black">
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-coffee-dark">
       {/* 3D Background */}
       <div className="absolute inset-0 z-0">
         <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center bg-coffee-dark/20 text-caramel/50 font-mono text-xs tracking-widest uppercase">Loading Cinematic Scene...</div>}>
@@ -93,21 +185,26 @@ export function Hero() {
               <pointLight position={[10, 10, 10]} intensity={3} color="#C68E5D" />
               <pointLight position={[-10, -10, -10]} intensity={2} color="#4E342E" />
               <pointLight position={[0, 0, 5]} intensity={2} color="#FFFFFF" />
-              <CoffeeDust count={200} />
-              <FieryParticles count={150} />
-              <ExplodingHeroBean />
-              <FloatingBeans />
+              <CoffeeDust count={300} />
+              <FieryParticles count={200} />
+              <BeanCluster />
               <Preload all />
             </Suspense>
             
             <EffectComposer multisampling={0}>
               <Bloom 
-                intensity={1.5} 
-                luminanceThreshold={0.2} 
+                intensity={2.0} 
+                luminanceThreshold={0.15} 
                 luminanceSmoothing={0.9} 
                 mipmapBlur
               />
-              <Vignette eskil={false} offset={0.1} darkness={1.1} />
+              <DepthOfField 
+                focusDistance={0} 
+                focalLength={0.02} 
+                bokehScale={2} 
+                height={480} 
+              />
+              <Vignette eskil={false} offset={0.1} darkness={1.2} />
             </EffectComposer>
           </Canvas>
         </Suspense>
@@ -119,21 +216,22 @@ export function Hero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-coffee-dark/20 backdrop-blur-none rounded-2xl px-8 py-10"
         >
           <motion.span 
             initial={{ opacity: 0, letterSpacing: "0.5em" }}
             animate={{ opacity: 1, letterSpacing: "1em" }}
             transition={{ duration: 2, delay: 0.5 }}
-            className="text-cream/40 font-mono text-[9px] uppercase block mb-6 font-bold"
+            className="text-cream/60 font-mono text-[9px] uppercase block mb-6 font-bold"
           >
             THE ULTIMATE AWAKENING
           </motion.span>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6 leading-[0.9] uppercase text-white/90">
+          <h1 className="text-5xl md:text-8xl font-bold tracking-tighter mb-8 leading-[0.8] uppercase text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             Ignite <br />
-            <span className="text-cream/40 italic serif lowercase">The Soul</span>
+            <span className="text-caramel italic serif lowercase drop-shadow-[0_0_30px_rgba(198,142,93,0.4)]">The Soul</span>
           </h1>
-          <p className="text-cream/40 text-sm md:text-base mb-10 max-w-xl mx-auto font-light tracking-wide leading-relaxed">
-            Experience the explosive intensity of our volcanic-grown beans, roasted to perfection.
+          <p className="text-cream/75 text-base md:text-xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+            Experience the explosive intensity of our volcanic-grown beans, roasted to perfection for the modern ritual.
           </p>
           
           <motion.div
@@ -145,7 +243,7 @@ export function Hero() {
             <Link to="/shopping">
               <button className="group relative px-12 py-5 rounded-full overflow-hidden glass border-white/10 hover:glow-border transition-all duration-500">
                 <div className="absolute inset-0 bg-caramel/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.4em] text-gold group-hover:text-cream transition-colors">
+                <span className="relative z-10 text-[10px] font-bold uppercase tracking-[0.4em] text-cream group-hover:text-cream transition-colors">
                   Explore Collection
                 </span>
               </button>
@@ -161,8 +259,8 @@ export function Hero() {
         transition={{ delay: 2, duration: 1 }}
         className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
       >
-        <span className="text-[8px] uppercase tracking-[0.5em] text-cream/20 font-bold">Scroll to Discover</span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-gold/40 to-transparent" />
+        <span className="text-[8px] uppercase tracking-[0.5em] text-cream/50 font-bold">Scroll to Discover</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-cream/40 to-transparent" />
       </motion.div>
 
       {/* Ambient Glow */}
@@ -202,7 +300,7 @@ export function CategoryModal({ isOpen, onClose }: { isOpen: boolean, onClose: (
           >
             {/* Background Glow */}
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-caramel/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-gold/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cream/5 rounded-full blur-[120px] pointer-events-none" />
 
             <button onClick={onClose} className="absolute top-8 right-8 p-3 hover:bg-white/10 rounded-full transition-all group z-20">
               <X className="w-8 h-8 group-hover:rotate-90 transition-transform duration-500" />
@@ -231,7 +329,7 @@ export function CategoryModal({ isOpen, onClose }: { isOpen: boolean, onClose: (
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-caramel/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="text-5xl mb-6 block drop-shadow-[0_0_20px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500">{cat.icon}</span>
-                    <h3 className="font-bold text-xl mb-2 group-hover:text-gold transition-colors tracking-tighter uppercase">{cat.name}</h3>
+                    <h3 className="font-bold text-xl mb-2 group-hover:text-cream transition-colors tracking-tighter uppercase">{cat.name}</h3>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-cream/40 uppercase tracking-[0.3em] font-bold">{cat.count} Items</span>
                       <ChevronRight className="w-4 h-4 text-caramel opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
@@ -255,7 +353,7 @@ export function CartPanel({ isOpen, onClose, items, onRemove, onUpdateQty }: {
   onRemove: (id: string) => void,
   onUpdateQty: (id: string, delta: number) => void
 }) {
-  const subtotal = items.reduce((acc, item) => acc + (parseFloat(item.price.replace('$', '')) * item.qty), 0);
+  const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
   return (
     <AnimatePresence>
@@ -306,23 +404,23 @@ export function CartPanel({ isOpen, onClose, items, onRemove, onUpdateQty }: {
                     className="flex gap-6 items-center group relative"
                   >
                     <div className="w-24 h-24 rounded-[32px] overflow-hidden glass border-white/10 group-hover:glow-border transition-all duration-500 flex-shrink-0">
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" referrerPolicy="no-referrer" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-cream group-hover:text-gold transition-colors tracking-tight text-lg mb-1">{item.title}</h3>
-                      <span className="text-caramel font-mono text-xs font-bold tracking-wider">{item.price}</span>
+                      <h3 className="font-bold text-cream group-hover:text-cream transition-colors tracking-tight text-lg mb-1">{item.name}</h3>
+                      <span className="text-caramel font-mono text-xs font-bold tracking-wider">${item.price.toFixed(2)}</span>
                       <div className="flex items-center gap-4 mt-4">
                         <div className="flex items-center gap-3 glass px-3 py-1.5 rounded-full border-white/5">
                           <button 
                             onClick={() => onUpdateQty(item.id, -1)}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-gold transition-all"
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-cream transition-all"
                           >
                             -
                           </button>
                           <span className="text-xs font-bold w-4 text-center">{item.qty}</span>
                           <button 
                             onClick={() => onUpdateQty(item.id, 1)}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-gold transition-all"
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-xs hover:text-cream transition-all"
                           >
                             +
                           </button>
@@ -349,11 +447,11 @@ export function CartPanel({ isOpen, onClose, items, onRemove, onUpdateQty }: {
                   </div>
                   <div className="flex justify-between text-2xl font-bold tracking-tighter">
                     <span className="uppercase">Total</span>
-                    <span className="text-gold font-mono">${subtotal.toFixed(2)}</span>
+                    <span className="text-cream font-mono">${subtotal.toFixed(2)}</span>
                   </div>
                 </div>
                 <Link to="/thankyou" onClick={onClose} className="block">
-                  <button className="w-full bg-caramel text-coffee-dark py-6 rounded-[32px] font-bold uppercase tracking-[0.3em] text-[10px] hover:bg-gold transition-all shadow-[0_20px_40px_rgba(198,142,93,0.2)] hover:shadow-[0_20px_50px_rgba(255,215,0,0.3)] active:scale-[0.98]">
+                  <button className="w-full bg-caramel text-coffee-dark py-6 rounded-[32px] font-bold uppercase tracking-[0.3em] text-[10px] hover:bg-caramel/90 transition-all shadow-[0_20px_40px_rgba(198,142,93,0.2)] hover:shadow-[0_20px_50px_rgba(198,142,93,0.3)] active:scale-[0.98]">
                     Complete Ritual
                   </button>
                 </Link>
@@ -432,30 +530,30 @@ export function AccountDashboard() {
                     <div className="w-32 h-32 rounded-full glass border-2 border-caramel p-1 relative group">
                       <img src="https://picsum.photos/seed/user/200/200" alt="avatar" className="w-full h-full rounded-full object-cover" referrerPolicy="no-referrer" />
                       <div className="absolute inset-0 bg-coffee-dark/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <Settings className="w-6 h-6 text-gold" />
+                        <Settings className="w-6 h-6 text-cream" />
                       </div>
                     </div>
                     <div>
                       <h2 className="text-4xl font-bold tracking-tighter uppercase mb-2">Ankit Kumar</h2>
-                      <p className="text-gold font-mono text-sm">ankitkumar999090@gmail.com</p>
+                      <p className="text-cream font-mono text-sm">ankitkumar999090@gmail.com</p>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                     <div className="space-y-3">
-                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Full Name</label>
+                      <label className="text-[10px] uppercase tracking-widest text-cream/60 font-bold">Full Name</label>
                       <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">Ankit Kumar</div>
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Member Since</label>
+                      <label className="text-[10px] uppercase tracking-widest text-cream/60 font-bold">Member Since</label>
                       <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">March 2026</div>
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Preferred Roast</label>
-                      <div className="glass px-8 py-5 rounded-2xl text-gold border border-gold/20 font-bold">Light-Medium</div>
+                      <label className="text-[10px] uppercase tracking-widest text-cream/60 font-bold">Preferred Roast</label>
+                      <div className="glass px-8 py-5 rounded-2xl text-cream border border-white/20 font-bold">Light-Medium</div>
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[10px] uppercase tracking-widest text-cream/30 font-bold">Total Rituals</label>
+                      <label className="text-[10px] uppercase tracking-widest text-cream/60 font-bold">Total Rituals</label>
                       <div className="glass px-8 py-5 rounded-2xl text-cream/80 border border-white/5">12 Brews</div>
                     </div>
                   </div>
@@ -477,7 +575,7 @@ export function AccountDashboard() {
                       </div>
                       <div className="flex items-center gap-8">
                         <div className="text-right">
-                          <span className="block font-mono text-gold text-xl font-bold">$84.00</span>
+                          <span className="block font-mono text-cream text-xl font-bold">$84.00</span>
                           <span className="text-[10px] text-cream/20 uppercase font-bold">3 Items</span>
                         </div>
                         <Link to="/tracking" className="w-12 h-12 rounded-full glass flex items-center justify-center group-hover:bg-caramel group-hover:text-coffee-dark transition-all">
@@ -544,11 +642,11 @@ export function CoffeeCard({ title, location, rating, image, price, oldPrice, ta
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-coffee-dark via-transparent to-transparent" />
+          <div className="absolute inset-0 card-gradient" />
           
           {/* Tag */}
           <div className="absolute top-6 left-6">
-            <div className="glass px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gold glow-border bg-coffee-dark/40 backdrop-blur-md">
+            <div className="glass px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-cream glow-border bg-coffee-dark/40 backdrop-blur-md">
               {tag || "Premium"}
             </div>
           </div>
@@ -563,24 +661,24 @@ export function CoffeeCard({ title, location, rating, image, price, oldPrice, ta
       <div className="p-8">
         <div className="flex justify-between items-start mb-2">
           <Link to={`/coffeeDetail/${id}`}>
-            <h3 className="text-2xl font-bold text-cream group-hover:text-gold transition-colors tracking-tighter uppercase">
+            <h3 className="text-2xl font-bold text-cream group-hover:text-cream transition-colors tracking-tighter uppercase">
               {title}
             </h3>
           </Link>
           <div className="flex flex-col items-end">
-            <span className="text-caramel font-bold text-xl">{price}</span>
+            <span className="text-gold font-bold text-xl">{price}</span>
             {oldPrice && (
               <span className="text-cream/30 text-xs line-through">{oldPrice}</span>
             )}
           </div>
         </div>
         
-        <div className="flex items-center gap-2 text-cream/40 text-sm mb-4">
-          <MapPin className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-cream/60 text-sm mb-4">
+          <MapPin className="w-4 h-4 text-caramel" />
           <span>{location}</span>
         </div>
 
-        <p className="text-cream/60 text-xs line-clamp-2 mb-6 leading-relaxed italic">
+        <p className="text-cream/70 text-xs line-clamp-2 mb-6 leading-relaxed italic">
           {description}
         </p>
 
@@ -603,7 +701,7 @@ export function CoffeeCard({ title, location, rating, image, price, oldPrice, ta
               e.preventDefault();
               onAddToCart && onAddToCart({ id, title, price, image });
             }}
-            className="px-6 py-3 rounded-full bg-caramel text-coffee-dark font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(198,142,93,0.3)] hover:shadow-[0_0_30px_rgba(198,142,93,0.5)] transition-all"
+            className="px-6 py-3 rounded-full bg-caramel text-coffee-dark font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(198,142,93,0.3)] hover:opacity-90 transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add to Cart</span>
@@ -615,17 +713,18 @@ export function CoffeeCard({ title, location, rating, image, price, oldPrice, ta
 }
 
 // --- Search Page ---
-export function SearchPage() {
+export function SearchPage({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(timer);
   }, []);
 
-  const results = LISTINGS.slice(0, 3);
+  const results = PRODUCTS.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      <Navbar onOpenCart={onOpenCart} onOpenCategories={onOpenCategories} cartCount={cartCount} />
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
@@ -667,6 +766,44 @@ export function SearchPage() {
 }
 
 // --- Shopping Page ---
+// --- Tilt Wrapper ---
+export function TiltWrapper({ children, className = "" }: { children: React.ReactNode, className?: string }) {
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = (y - centerY) / 25;
+    const rotateY = (centerX - x) / 25;
+    setRotate({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        perspective: 1000,
+        rotateX: rotate.x,
+        rotateY: rotate.y,
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // --- Showcase Card ---
 export function ShowcaseCard({ item, onAddToCart }: { item: any, onAddToCart: (item: any) => void }) {
   const [rotate, setRotate] = useState({ x: 0, y: 0 });
@@ -693,56 +830,66 @@ export function ShowcaseCard({ item, onAddToCart }: { item: any, onAddToCart: (i
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       style={{
-        perspective: 1000,
+        perspective: 1500,
         rotateX: rotate.x,
         rotateY: rotate.y,
       }}
       className="relative group cursor-pointer"
     >
       <Link to={`/coffeeDetail/${item.id}`}>
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[32px] bg-assava-brown border border-white/5 transition-all duration-700 group-hover:glow-border group-hover:-translate-y-4">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[50px] bg-coffee-dark border border-white/5 transition-all duration-700 group-hover:glow-border group-hover:-translate-y-6 shadow-[0_30px_60px_rgba(0,0,0,0.5)] group-hover:shadow-[0_50px_100px_rgba(0,0,0,0.8)]">
           {/* Image */}
           <motion.img
             src={item.image}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            alt={item.name}
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 group-hover:opacity-40"
             referrerPolicy="no-referrer"
           />
           
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-700" />
+          <div className="absolute inset-0 card-gradient opacity-70 group-hover:opacity-95 transition-opacity duration-700" />
           
           {/* Content */}
-          <div className="absolute inset-0 p-8 flex flex-col justify-end">
+          <div className="absolute inset-0 p-12 flex flex-col justify-end">
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-2"
+              className="space-y-6"
             >
-              <div className="flex justify-between items-end">
-                <div>
-                  <span className="text-gold font-mono text-[10px] uppercase tracking-[0.3em] mb-2 block font-bold">
-                    {item.profile.origin} / {item.profile.roast} / {item.profile.type}
+              <div className="flex justify-between items-end gap-4">
+                <div className="flex-1">
+                  <span className="text-cream font-mono text-[9px] uppercase tracking-[0.5em] mb-4 block font-bold opacity-60 group-hover:opacity-100 transition-opacity">
+                    {item.profile?.origin} / {item.profile?.roast}
                   </span>
-                  <h3 className="text-3xl font-bold tracking-tighter text-white group-hover:text-gold transition-colors duration-500">
-                    {item.title}
+                  <h3 className="text-4xl md:text-5xl font-bold tracking-tighter text-white group-hover:text-cream transition-colors duration-500 uppercase leading-[0.85]">
+                    {item.name}
                   </h3>
+                  <Link to={`/coffeeDetail/${item.id}`} className="text-[10px] text-caramel uppercase tracking-widest font-bold mt-4 inline-block hover:text-gold transition-colors">
+                    View Details
+                  </Link>
                 </div>
-                <span className="text-2xl font-bold text-cream/80">{item.price}</span>
+                <div className="text-right">
+                  <span className="text-3xl font-bold text-gold font-mono tracking-tighter block">${item.price.toFixed(2)}</span>
+                </div>
               </div>
               
-              <div className="h-0 overflow-hidden group-hover:h-auto transition-all duration-700 opacity-0 group-hover:opacity-100 pt-4">
-                <p className="text-cream/60 text-sm leading-relaxed mb-6">
-                  {item.description}
+              <div className="opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-700 pt-2 space-y-8">
+                <p className="text-cream/50 text-sm leading-relaxed font-light italic">
+                  "{item.description}"
                 </p>
+                <div className="flex flex-wrap gap-2">
+                  {item.flavorNotes?.slice(0, 3).map((note: string, i: number) => (
+                    <span key={i} className="text-[8px] uppercase tracking-widest px-3 py-1 rounded-full glass border-white/5 text-cream/60">{note}</span>
+                  ))}
+                </div>
                 <button 
                   onClick={(e) => {
                     e.preventDefault();
                     onAddToCart(item);
                   }}
-                  className="w-full py-4 glass rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-gold hover:bg-gold hover:text-coffee-dark transition-all duration-500"
+                  className="w-full py-6 bg-caramel text-coffee-dark rounded-3xl text-[10px] font-bold uppercase tracking-[0.5em] hover:bg-caramel/90 transition-all duration-500 shadow-[0_0_40px_rgba(198,142,93,0.2)]"
                 >
                   Add to Collection
                 </button>
@@ -750,8 +897,8 @@ export function ShowcaseCard({ item, onAddToCart }: { item: any, onAddToCart: (i
             </motion.div>
           </div>
 
-          {/* Glow Accent */}
-          <div className="absolute -inset-px bg-gradient-to-tr from-gold/20 via-transparent to-caramel/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rounded-[32px]" />
+          {/* Shine Effect */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
         </div>
       </Link>
     </motion.div>
@@ -764,15 +911,15 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
   
   const filters = ['All', 'Instant', 'Brew', 'Espresso'];
 
-  const filteredItems = LISTINGS.filter(item => {
-    const matchesFilter = activeFilter === 'All' || item.tag === activeFilter;
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredItems = PRODUCTS.filter(item => {
+    const matchesFilter = activeFilter === 'All' || item.category === activeFilter;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   return (
-    <div className="min-h-screen bg-black pt-40 pb-32 px-6 relative">
+    <div className="min-h-screen bg-coffee-dark pt-40 pb-32 px-6 relative">
       {/* Background Grain & Particles */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-30">
         <Canvas gl={{ alpha: true }} camera={{ position: [0, 0, 5] }}>
@@ -787,7 +934,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
             <motion.span
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-gold font-mono text-xs uppercase tracking-[0.5em] mb-6 block font-bold"
+              className="text-cream font-mono text-xs uppercase tracking-[0.5em] mb-6 block font-bold"
             >
               Curated Blends
             </motion.span>
@@ -804,7 +951,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-cream/40 text-xl font-light max-w-lg"
+              className="text-cream/70 text-xl font-light max-w-lg"
             >
               Explore curated blends crafted for experience. Each bean is a story of origin, precision, and passion.
             </motion.p>
@@ -813,7 +960,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
           <div className="w-full lg:w-auto space-y-8">
             {/* Search Bar */}
             <div className="relative group">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-cream/30 group-focus-within:text-gold transition-colors" />
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-cream/30 group-focus-within:text-cream transition-colors" />
               <input 
                 type="text"
                 placeholder="Search Collection..."
@@ -832,7 +979,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
                   className={cn(
                     "px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-500",
                     activeFilter === filter 
-                      ? "bg-gold text-coffee-dark shadow-[0_0_20px_rgba(255,215,0,0.3)]" 
+                      ? "bg-cream text-coffee-dark shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
                       : "glass text-cream/40 hover:text-cream hover:border-white/20"
                   )}
                 >
@@ -882,7 +1029,7 @@ export function ShoppingPage({ onAddToCart }: { onAddToCart: (item: any) => void
 // --- Coffee Detail Page ---
 export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => void }) {
   const { id } = useParams();
-  const item = LISTINGS.find(l => l.id === id) || LISTINGS[0];
+  const item = PRODUCTS.find(l => l.id === id) || PRODUCTS[0];
 
   return (
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
@@ -917,9 +1064,9 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
                <motion.div 
                  animate={{ y: [0, -10, 0] }}
                  transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                 className="absolute top-10 left-10 glass p-6 rounded-3xl border-gold/20 bg-coffee-dark/40 backdrop-blur-xl"
+                 className="absolute top-10 left-10 glass p-6 rounded-3xl border-white/20 bg-coffee-dark/40 backdrop-blur-xl"
                >
-                 <span className="text-[10px] uppercase tracking-[0.3em] text-gold font-bold block mb-2">Purity Level</span>
+                 <span className="text-[10px] uppercase tracking-[0.3em] text-cream font-bold block mb-2">Purity Level</span>
                  <div className="text-3xl font-bold font-mono">98.4%</div>
                </motion.div>
             </div>
@@ -933,32 +1080,32 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
                 animate={{ opacity: 1, x: 0 }}
                 className="text-caramel font-mono text-sm uppercase tracking-[0.4em] mb-6 block font-bold"
               >
-                Special Reserve • {item.profile.origin}
+                Special Reserve • {item.profile?.origin}
               </motion.span>
               <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 text-glow leading-[0.9] uppercase">
-                {item.title}
+                {item.name}
               </h1>
               
               <div className="flex items-center gap-10">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={cn("w-4 h-4", i < Math.floor(item.rating) ? "text-gold fill-gold" : "text-white/10")} />
+                      <Star key={i} className={cn("w-4 h-4", i < Math.floor(item.rating || 5) ? "text-cream fill-cream" : "text-white/10")} />
                     ))}
                   </div>
-                  <span className="font-bold text-gold">{item.rating}</span>
-                  <span className="text-cream/20 text-xs uppercase tracking-widest">({item.reviews} Reviews)</span>
+                  <span className="font-bold text-cream">{item.rating || 5.0}</span>
+                  <span className="text-cream/20 text-xs uppercase tracking-widest">({item.reviews || 100} Reviews)</span>
                 </div>
                 <div className="h-4 w-[1px] bg-white/10" />
                 <div className="flex items-center gap-2 text-cream/60 text-sm">
                   <MapPin className="w-4 h-4 text-caramel" />
-                  {item.location}
+                  {item.location || "Global"}
                 </div>
               </div>
             </section>
 
             <section className="space-y-8">
-              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">The Story</h3>
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-cream font-bold">The Story</h3>
               <p className="text-2xl text-cream/60 leading-relaxed font-light italic font-serif">
                 "{item.description}"
               </p>
@@ -966,36 +1113,39 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
 
             <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { label: "Origin", value: item.profile.origin, icon: MapPin },
-                { label: "Roast", value: item.profile.roast, icon: Coffee },
+                { label: "Origin", value: item.profile?.origin || "Unknown", icon: MapPin },
+                { label: "Roast", value: item.profile?.roast || "Medium", icon: Coffee },
                 { label: "Body", value: item.profile?.body || "Medium", icon: Droplets },
                 { label: "Acidity", value: item.profile?.acidity || "Balanced", icon: Zap },
               ].map((attr, i) => (
-                <div key={i} className="glass p-6 rounded-3xl border-white/5 hover:glow-border transition-all bg-white/5">
-                  <attr.icon className="w-5 h-5 text-caramel mb-4" />
-                  <span className="text-[10px] uppercase tracking-widest text-cream/40 font-bold block mb-1">{attr.label}</span>
-                  <span className="text-sm font-bold text-cream">{attr.value}</span>
-                </div>
+                <TiltWrapper key={i}>
+                  <div className="glass p-6 rounded-3xl border-white/5 hover:glow-border transition-all bg-white/5 h-full">
+                    <attr.icon className="w-5 h-5 text-caramel mb-4" />
+                    <span className="text-[10px] uppercase tracking-widest text-cream/40 font-bold block mb-1">{attr.label}</span>
+                    <span className="text-sm font-bold text-cream">{attr.value}</span>
+                  </div>
+                </TiltWrapper>
               ))}
             </section>
 
             <section className="space-y-8">
-              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Flavor Profile</h3>
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-cream font-bold">Flavor Profile</h3>
               <div className="flex flex-wrap gap-4">
                 {(item.flavorNotes || ["Chocolate", "Caramel", "Nutty"]).map((note: string, i: number) => (
-                  <motion.div 
-                    key={i}
-                    whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 215, 0, 0.1)" }}
-                    className="glass px-6 py-3 rounded-full border-gold/20 text-sm font-bold text-gold shadow-[0_0_15px_rgba(255,215,0,0.05)] cursor-default bg-white/5"
-                  >
-                    {note}
-                  </motion.div>
+                  <TiltWrapper key={i}>
+                    <motion.div 
+                      whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+                      className="glass px-6 py-3 rounded-full border-white/20 text-sm font-bold text-cream shadow-[0_0_15px_rgba(255,255,255,0.05)] cursor-default bg-white/5"
+                    >
+                      {note}
+                    </motion.div>
+                  </TiltWrapper>
                 ))}
               </div>
             </section>
 
             <section className="space-y-8">
-              <h3 className="text-[10px] uppercase tracking-[0.4em] text-gold font-bold">Recommended Brewing</h3>
+              <h3 className="text-[10px] uppercase tracking-[0.4em] text-cream font-bold">Recommended Brewing</h3>
               <div className="flex gap-10">
                 {(item.brewingMethods || ["V60", "Espresso"]).map((method: string, i: number) => {
                   const MethodIcon = method.includes('V60') ? Wind : 
@@ -1019,7 +1169,7 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
             <section className="pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-10">
               <div className="flex flex-col">
                 <span className="text-[10px] uppercase tracking-widest text-cream/40 font-bold mb-2">Price per 250g</span>
-                <span className="text-6xl font-bold text-gold font-mono tracking-tighter">{item.price}</span>
+                <span className="text-6xl font-bold text-cream font-mono tracking-tighter">${item.price.toFixed(2)}</span>
               </div>
               
               <motion.button 
@@ -1030,7 +1180,7 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
                   boxShadow: ["0 0 20px rgba(198,142,93,0.2)", "0 0 40px rgba(198,142,93,0.5)", "0 0 20px rgba(198,142,93,0.2)"]
                 }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="px-16 py-8 bg-caramel text-coffee-dark rounded-full font-bold uppercase tracking-[0.3em] text-sm shadow-[0_0_40px_rgba(198,142,93,0.4)] hover:bg-gold transition-all relative overflow-hidden group"
+                className="px-16 py-8 bg-caramel text-coffee-dark rounded-full font-bold uppercase tracking-[0.3em] text-sm shadow-[0_0_40px_rgba(198,142,93,0.4)] hover:opacity-90 transition-all relative overflow-hidden group"
               >
                 <span className="relative z-10">Add to Ritual</span>
                 <motion.div 
@@ -1046,9 +1196,10 @@ export function CoffeeDetailPage({ onAddToCart }: { onAddToCart: (item: any) => 
 }
 
 // --- Thank You Page ---
-export function ThankYouPage() {
+export function ThankYouPage({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   return (
     <div className="min-h-screen bg-coffee-dark flex items-center justify-center text-center px-6 relative overflow-hidden">
+      <Navbar onOpenCart={onOpenCart} onOpenCategories={onOpenCategories} cartCount={cartCount} />
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
@@ -1074,7 +1225,7 @@ export function ThankYouPage() {
           <motion.div 
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ repeat: Infinity, duration: 3 }}
-            className="absolute inset-0 bg-gold/10 rounded-full blur-3xl"
+            className="absolute inset-0 bg-cream/10 rounded-full blur-3xl"
           />
         </div>
 
@@ -1110,9 +1261,10 @@ export function ThankYouPage() {
 }
 
 // --- Order History Page ---
-export function OrderHistoryPage() {
+export function OrderHistoryPage({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   return (
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      <Navbar onOpenCart={onOpenCart} onOpenCategories={onOpenCategories} cartCount={cartCount} />
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
@@ -1134,7 +1286,7 @@ export function OrderHistoryPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="glass p-10 rounded-[48px] border border-white/5 hover:glow-border transition-all bg-white/5 backdrop-blur-3xl group"
+              className="glass p-10 rounded-[48px] border border-white/5 hover:glow-border-hover transition-all bg-white/5 backdrop-blur-3xl group"
             >
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 <div className="flex items-center gap-8">
@@ -1144,16 +1296,16 @@ export function OrderHistoryPage() {
                   <div>
                     <div className="flex items-center gap-4 mb-2">
                       <h4 className="text-2xl font-bold uppercase tracking-tight">Order #CF-928{i}</h4>
-                      <span className="px-3 py-1 rounded-full bg-gold/10 text-gold text-[10px] font-bold uppercase tracking-widest border border-gold/20">Delivered</span>
+                      <span className="px-3 py-1 rounded-full bg-white/10 text-cream text-[10px] font-bold uppercase tracking-widest border border-white/20">Delivered</span>
                     </div>
-                    <p className="text-sm text-cream/40 uppercase tracking-widest font-bold">March {20 + i}, 2026 • 3 Items</p>
+                    <p className="text-sm text-cream/50 uppercase tracking-widest font-bold">March {20 + i}, 2026 • 3 Items</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-10 w-full md:w-auto justify-between md:justify-end">
                   <div className="text-right">
-                    <span className="block font-mono text-gold text-3xl font-bold">$84.00</span>
-                    <span className="text-[10px] text-cream/20 uppercase font-bold">Total Ritual Cost</span>
+                    <span className="block font-mono text-cream text-3xl font-bold">$84.00</span>
+                    <span className="text-[10px] text-cream/50 uppercase font-bold">Total Ritual Cost</span>
                   </div>
                   <Link to="/tracking" className="px-8 py-4 rounded-full glass text-xs font-bold uppercase tracking-widest hover:bg-caramel hover:text-coffee-dark transition-all border border-white/10">
                     Details
@@ -1169,7 +1321,7 @@ export function OrderHistoryPage() {
 }
 
 // --- Tracking Page ---
-export function TrackingPage() {
+export function TrackingPage({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   const steps = [
     { label: "Order Placed", date: "Mar 24, 10:30 AM", status: "completed" },
     { label: "Master Roasting", date: "Mar 24, 02:15 PM", status: "completed" },
@@ -1180,6 +1332,7 @@ export function TrackingPage() {
 
   return (
     <div className="min-h-screen bg-coffee-dark pt-32 pb-20 px-6 relative overflow-hidden">
+      <Navbar onOpenCart={onOpenCart} onOpenCategories={onOpenCategories} cartCount={cartCount} />
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Canvas gl={{ antialias: false, alpha: true, powerPreference: "low-power" }} camera={{ position: [0, 0, 5] }} dpr={[1, 1.5]}>
@@ -1226,7 +1379,7 @@ export function TrackingPage() {
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center z-10 relative shadow-[0_0_20px_rgba(0,0,0,0.5)]",
                     step.status === 'completed' ? "bg-caramel text-coffee-dark" : 
-                    step.status === 'current' ? "bg-gold text-coffee-dark animate-pulse" : "bg-white/10 text-cream/20"
+                    step.status === 'current' ? "bg-cream text-coffee-dark animate-pulse" : "bg-white/10 text-cream/20"
                   )}>
                     {step.status === 'completed' ? <Check className="w-5 h-5" /> : <div className="w-2 h-2 rounded-full bg-current" />}
                   </div>
@@ -1252,131 +1405,6 @@ export function TrackingPage() {
     </div>
   );
 }
-
-export const LISTINGS = [
-  {
-    id: "1",
-    title: "ASSAVA NOIR",
-    location: "Sidamo Highlands",
-    rating: 4.9,
-    reviews: 128,
-    price: "$42.00",
-    oldPrice: "$55.00",
-    tag: "Espresso",
-    image: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=800",
-    description: "A deep, mysterious roast with notes of dark chocolate and midnight jasmine.",
-    profile: {
-      origin: "Ethiopia",
-      roast: "Dark",
-      type: "Single Origin",
-      body: "Full",
-      acidity: "Bright"
-    },
-    flavorNotes: ["Dark Chocolate", "Midnight Jasmine", "Black Cherry"],
-    brewingMethods: ["Espresso", "V60", "Moka Pot"]
-  },
-  {
-    id: "2",
-    title: "VELVET ETHEREAL",
-    location: "Milan, Italy",
-    rating: 4.8,
-    reviews: 256,
-    price: "$38.00",
-    oldPrice: "$45.00",
-    tag: "Brew",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&q=80&w=800",
-    description: "Silky smooth texture with a lingering sweetness of toasted hazelnuts.",
-    profile: {
-      origin: "Brazil",
-      roast: "Medium",
-      type: "Blend",
-      body: "Medium",
-      acidity: "Balanced"
-    },
-    flavorNotes: ["Hazelnut", "Caramel", "Milk Chocolate"],
-    brewingMethods: ["V60", "Chemex", "Aeropress"]
-  },
-  {
-    id: "3",
-    title: "GOLDEN GEISHA",
-    location: "Panama Valley",
-    rating: 5.0,
-    reviews: 64,
-    price: "$120.00",
-    oldPrice: "$150.00",
-    tag: "Brew",
-    image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&q=80&w=800",
-    description: "The crown jewel of ASSAVA. Sparkling acidity with peach blossom notes.",
-    profile: {
-      origin: "Panama",
-      roast: "Light",
-      type: "Special Reserve",
-      body: "Light",
-      acidity: "High"
-    },
-    flavorNotes: ["Peach Blossom", "Bergamot", "Honey"],
-    brewingMethods: ["V60", "Chemex", "Siphon"]
-  },
-  {
-    id: "4",
-    title: "OBSIDIAN MIST",
-    location: "Tokyo, Japan",
-    rating: 4.7,
-    reviews: 89,
-    price: "$45.00",
-    oldPrice: "$52.00",
-    tag: "Instant",
-    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&q=80&w=800",
-    description: "Clean, precise, and uncompromising. A masterclass in minimalist roasting.",
-    profile: {
-      origin: "Guatemala",
-      roast: "Medium",
-      type: "Artisan",
-      body: "Medium",
-      acidity: "Balanced"
-    },
-    flavorNotes: ["Green Apple", "Almond", "Cane Sugar"],
-    brewingMethods: ["Aeropress", "V60", "French Press"]
-  },
-  {
-    id: "5",
-    title: "BROOKLYN RITUAL",
-    location: "Brooklyn, NY",
-    rating: 4.6,
-    reviews: 112,
-    price: "$18.00",
-    oldPrice: "$22.00",
-    tag: "Brew",
-    image: "https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&q=80&w=800",
-    description: "Optimized for the 18-hour steep. Deep cocoa and natural sweetness.",
-    profile: {
-      origin: "Colombia",
-      roast: "Medium-Dark",
-      type: "Cold Brew",
-      body: "Heavy",
-      acidity: "Low"
-    },
-    flavorNotes: ["Cocoa", "Molasses", "Walnut"],
-    brewingMethods: ["Cold Brew", "French Press", "Aeropress"]
-  },
-  {
-    id: "6",
-    title: "ALCHEMIST'S AMBER",
-    location: "London, UK",
-    rating: 4.9,
-    reviews: 76,
-    price: "$55.00",
-    oldPrice: "$68.00",
-    tag: "Espresso",
-    image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&q=80&w=800",
-    description: "Experimental anaerobic fermentation results in wild, funky strawberry notes.",
-    profile: {
-      origin: "Costa Rica",
-      roast: "Light-Medium",
-      type: "Experimental"
-    }
-  }
-];
 
 // --- Loading Screen ---
 export function LoadingScreen() {
@@ -1436,7 +1464,7 @@ export function LoadingScreen() {
         transition={{ delay: 0.5 }}
         className="text-center"
       >
-        <h2 className="text-2xl font-bold tracking-tighter text-gold mb-2 uppercase tracking-[0.3em]">Brewing Ritual</h2>
+        <h2 className="text-2xl font-bold tracking-tighter text-cream mb-2 uppercase tracking-[0.3em]">Brewing Ritual</h2>
         <div className="flex gap-1 justify-center">
           {[0, 1, 2].map(i => (
             <motion.div
@@ -1453,7 +1481,7 @@ export function LoadingScreen() {
 }
 
 // --- Category Page ---
-export function CategoryPage() {
+export function CategoryPage({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   const categories = [
     { name: "Single Origin", icon: "🌍", count: 24, desc: "Pure essence from specific regions" },
     { name: "House Blends", icon: "🏠", count: 12, desc: "Our signature balanced creations" },
@@ -1499,7 +1527,7 @@ export function CategoryPage() {
               <span className="text-7xl mb-10 block drop-shadow-[0_0_30px_rgba(255,255,255,0.1)] group-hover:scale-110 transition-transform duration-500">
                 {cat.icon}
               </span>
-              <h3 className="text-3xl font-bold mb-4 group-hover:text-gold transition-colors tracking-tighter uppercase">
+              <h3 className="text-3xl font-bold mb-4 group-hover:text-cream transition-colors tracking-tighter uppercase">
                 {cat.name}
               </h3>
               <p className="text-cream/40 text-sm mb-8 leading-relaxed italic">
@@ -1522,7 +1550,7 @@ export function CategoryPage() {
 }
 
 // --- Scroll Story (About Page) ---
-export function ScrollStory() {
+export function ScrollStory({ onOpenCart, onOpenCategories, cartCount }: { onOpenCart: () => void, onOpenCategories: () => void, cartCount: number }) {
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -1539,6 +1567,7 @@ export function ScrollStory() {
 
   return (
     <section ref={containerRef} className="relative h-[600vh] bg-coffee-dark">
+      <Navbar onOpenCart={onOpenCart} onOpenCategories={onOpenCategories} cartCount={cartCount} />
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
         {/* Progress Bar */}
         <div className="absolute left-12 top-1/2 -translate-y-1/2 w-1 h-80 bg-white/5 rounded-full overflow-hidden">
@@ -1598,7 +1627,7 @@ function StoryStep({ step, progress, range }: any) {
       >
         {step.icon}
       </motion.span>
-      <h2 className="text-6xl md:text-9xl font-bold mb-8 text-gold uppercase tracking-tighter text-glow">{step.title}</h2>
+      <h2 className="text-6xl md:text-9xl font-bold mb-8 text-cream uppercase tracking-tighter text-glow">{step.title}</h2>
       <p className="text-xl md:text-3xl text-cream/60 max-w-2xl font-light leading-relaxed">
         {step.desc}
       </p>

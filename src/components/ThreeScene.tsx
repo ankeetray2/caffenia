@@ -1,12 +1,13 @@
-import { useRef, useMemo, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Float, Sphere, MeshDistortMaterial, useTexture } from '@react-three/drei';
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { Float, Sphere, MeshDistortMaterial, useTexture, MeshWobbleMaterial } from '@react-three/drei';
 import * as THREE from 'three';
 
 export function BeanCluster() {
   const mouse = useRef(new THREE.Vector2(0, 0));
   const scrollY = useRef(0);
   const groupRef = useRef<THREE.Group>(null);
+  const { viewport } = useThree();
   
   // Load a single reliable realistic macro coffee bean texture
   const texture = useTexture('https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&q=80&w=500');
@@ -27,13 +28,16 @@ export function BeanCluster() {
     };
   }, []);
 
-  const beansCount = 80;
+  const beansCount = 350; // Increased count for denser shell with smaller beans
   const beans = useMemo(() => {
     const b = [];
     for (let i = 0; i < beansCount; i++) {
+      // Fibonacci sphere distribution for a more uniform shell
       const phi = Math.acos(-1 + (2 * i) / beansCount);
       const theta = Math.sqrt(beansCount * Math.PI) * phi;
-      const radius = 3.5 + Math.random() * 2; // Move further out
+      
+      // Create a shell effect with some thickness
+      const radius = 5 + (Math.random() - 0.5) * 1.5; 
       
       b.push({
         initialPos: new THREE.Vector3(
@@ -41,9 +45,9 @@ export function BeanCluster() {
           radius * Math.sin(theta) * Math.sin(phi),
           radius * Math.cos(phi)
         ),
-        scale: 0.5 + Math.random() * 0.4, // Much larger
+        scale: 0.15 + Math.random() * 0.15,
         rotation: new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI),
-        speed: 0.1 + Math.random() * 0.3,
+        speed: 0.1 + Math.random() * 0.2,
       });
     }
     return b;
@@ -52,20 +56,35 @@ export function BeanCluster() {
   useFrame((state) => {
     if (groupRef.current) {
       const time = state.clock.getElapsedTime();
-      groupRef.current.rotation.y = time * 0.08 + scrollY.current * 0.0006;
-      groupRef.current.rotation.x = Math.sin(time * 0.15) * 0.04 + scrollY.current * 0.0003;
-      groupRef.current.position.y = Math.sin(time * 0.3) * 0.15 - scrollY.current * 0.0008;
-      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, mouse.current.x * 0.04, 0.05);
+      // Smooth continuous rotation for the "revolver" feel
+      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, time * 0.15 + scrollY.current * 0.001, 0.1);
+      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, Math.sin(time * 0.1) * 0.1 + scrollY.current * 0.0005, 0.1);
+      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, Math.sin(time * 0.2) * 0.2 - scrollY.current * 0.001, 0.1);
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, mouse.current.x * 0.2, 0.05);
     }
   });
 
   return (
     <group ref={groupRef}>
-      {/* Sun-like directional light */}
-      <directionalLight position={[5, 5, 5]} intensity={3} color="#FFD700" />
-      {/* Rim light for cinematic effect */}
-      <pointLight position={[0, 0, -5]} intensity={4} color="#FFA500" />
+      <directionalLight position={[10, 10, 10]} intensity={2} color="#F5F5DC" />
+      <pointLight position={[-10, -10, -10]} intensity={2} color="#C68E5D" />
+      <pointLight position={[0, 0, 15]} intensity={1.5} color="#FFFFFF" />
       <MouseLight mouse={mouse} />
+      
+      {/* Central Core Bean */}
+      <group scale={1.8}>
+        <pointLight intensity={4} distance={15} color="#F5F5DC" />
+        <ClusterBean 
+          initialPos={new THREE.Vector3(0, 0, 0)} 
+          scale={0.8} 
+          rotation={new THREE.Euler(0, 0, 0)} 
+          speed={0.5} 
+          mouse={mouse} 
+          scrollY={scrollY} 
+          texture={texture} 
+        />
+      </group>
+
       {beans.map((bean, i) => (
         <ClusterBean key={i} {...bean} mouse={mouse} scrollY={scrollY} texture={texture} />
       ))}
@@ -87,11 +106,11 @@ function MouseLight({ mouse }: { mouse: React.MutableRefObject<THREE.Vector2> })
   return (
     <spotLight 
       ref={lightRef} 
-      intensity={15} 
+      intensity={5} 
       distance={40} 
       angle={0.8} 
       penumbra={1} 
-      color="#FFA500" 
+      color="#F5F5DC" 
       castShadow={false}
     />
   );
@@ -105,19 +124,19 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
   useFrame((state) => {
     if (!groupRef.current) return;
     
-    const mouseV3 = tempVec.set(mouse.current.x * 8, mouse.current.y * 8, 4);
+    const mouseV3 = tempVec.set(mouse.current.x * 12, mouse.current.y * 12, 6);
     const worldPos = groupRef.current.getWorldPosition(new THREE.Vector3());
     const dist = worldPos.distanceTo(mouseV3);
     
     const mouseFromCenter = tempV2.set(mouse.current.x, mouse.current.y).length();
-    const isNearCluster = mouseFromCenter < 0.8;
-    const expansionFactor = isNearCluster ? 1.25 : 1;
+    const isNearCluster = mouseFromCenter < 1.2;
+    const expansionFactor = isNearCluster ? 1.6 : 1;
     
-    const repulsionRadius = 4.5;
-    const repulsionStrength = dist < repulsionRadius ? (repulsionRadius - dist) * 0.9 : 0;
+    const repulsionRadius = 6.5;
+    const repulsionStrength = dist < repulsionRadius ? (repulsionRadius - dist) * 1.5 : 0;
     const repulsionDir = worldPos.sub(mouseV3).normalize();
     
-    const dispersion = scrollY.current * 0.003;
+    const dispersion = scrollY.current * 0.005;
     const finalTarget = initialPos.clone().multiplyScalar(expansionFactor + dispersion);
     
     if (repulsionStrength > 0 && groupRef.current && groupRef.current.parent) {
@@ -128,10 +147,10 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
       }
     }
     
-    groupRef.current.position.lerp(finalTarget, 0.04);
-    groupRef.current.rotation.x += 0.01 * speed + (dist < 3 ? 0.04 : 0);
-    groupRef.current.rotation.y += 0.01 * speed + (dist < 3 ? 0.04 : 0);
-    groupRef.current.rotation.z += 0.005 * speed;
+    groupRef.current.position.lerp(finalTarget, 0.06);
+    groupRef.current.rotation.x += 0.015 * speed + (dist < 5 ? 0.06 : 0);
+    groupRef.current.rotation.y += 0.015 * speed + (dist < 5 ? 0.06 : 0);
+    groupRef.current.rotation.z += 0.008 * speed;
     
     // Update emissive intensity for all materials in the group
     if (groupRef.current) {
@@ -140,9 +159,9 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
           const materials = Array.isArray(child.material) ? child.material : [child.material];
           materials.forEach((mat: any) => {
             if (mat && mat.emissive) {
-              const glow = Math.max(0, 1 - dist * 0.2) * (isNearCluster ? 1.2 : 1);
-              mat.emissiveIntensity = 0.5 + glow * 2.5;
-              mat.emissive.set(glow > 0.3 ? "#FFD700" : "#4E342E");
+              const glow = Math.max(0, 1 - dist * 0.15) * (isNearCluster ? 1.2 : 1);
+              mat.emissiveIntensity = 0.5 + glow * 1.5;
+              mat.emissive.set(glow > 0.5 ? "#F5F5DC" : "#4E342E");
             }
           });
         }
@@ -158,12 +177,12 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
         <meshStandardMaterial 
           map={texture}
           bumpMap={texture}
-          bumpScale={0.04}
+          bumpScale={0.05}
           color="#8D6E63" 
-          roughness={0.35} 
-          metalness={0.25} 
+          roughness={0.3} 
+          metalness={0.3} 
           emissive="#4E342E"
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.4}
         />
       </mesh>
       {/* Right Half of the bean */}
@@ -172,12 +191,12 @@ function ClusterBean({ initialPos, scale, rotation, speed, mouse, scrollY, textu
         <meshStandardMaterial 
           map={texture}
           bumpMap={texture}
-          bumpScale={0.04}
+          bumpScale={0.05}
           color="#8D6E63" 
-          roughness={0.35} 
-          metalness={0.25} 
+          roughness={0.3} 
+          metalness={0.3} 
           emissive="#4E342E"
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.4}
         />
       </mesh>
     </group>
@@ -204,7 +223,7 @@ export function CoffeeBean({ position, rotation, scale, texture }: { position: [
           color="#8D6E63" 
           roughness={0.3} 
           metalness={0.2} 
-          emissive="#FFA500"
+          emissive="#F5F5DC"
           emissiveIntensity={1.2}
         />
       </mesh>
@@ -245,7 +264,7 @@ export function CoffeeDust({ count = 600 }) {
       </bufferGeometry>
       <pointsMaterial
         transparent
-        color="#D4AF37"
+        color="#F5F5DC"
         size={0.05}
         sizeAttenuation={true}
         depthWrite={false}
@@ -295,7 +314,7 @@ export function CoffeeSteam({ count = 40 }) {
             color="#FFF4E0" 
             transparent 
             opacity={p.opacity} 
-            emissive="#FFD700"
+            emissive="#F5F5DC"
             emissiveIntensity={0.2}
             depthWrite={false}
           />
