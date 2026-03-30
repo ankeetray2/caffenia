@@ -29,15 +29,16 @@ export function Navbar({ onOpenCart, onOpenCategories }: { onOpenCart: () => voi
           <div className="w-10 h-10 bg-caramel rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(198,142,93,0.5)] group-hover:scale-110 transition-transform">
             <Coffee className="text-coffee-dark w-6 h-6" />
           </div>
-          <span className="text-2xl font-bold tracking-tighter text-cream uppercase">ASSAVA</span>
+          <span className="text-xl font-bold tracking-tighter text-cream/60 uppercase">ASSAVA</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.3em] text-cream/70">
-          <Link to="/" className={cn("hover:text-gold transition-colors", location.pathname === "/" && "text-gold")}>Experience</Link>
-          <button onClick={onOpenCategories} className="hover:text-gold transition-colors flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-8 text-[9px] font-bold uppercase tracking-[0.3em] text-cream/50">
+          <Link to="/" className={cn("hover:text-cream transition-colors", location.pathname === "/" && "text-cream")}>Experience</Link>
+          <Link to="/shopping" className={cn("hover:text-cream transition-colors", location.pathname === "/shopping" && "text-cream")}>Shop</Link>
+          <button onClick={onOpenCategories} className="hover:text-cream transition-colors flex items-center gap-1">
             Categories <Filter className="w-3 h-3" />
           </button>
-          <Link to="/about" className={cn("hover:text-gold transition-colors", location.pathname === "/about" && "text-gold")}>Story</Link>
+          <Link to="/about" className={cn("hover:text-cream transition-colors", location.pathname === "/about" && "text-cream")}>Story</Link>
         </div>
 
         <div className="flex items-center gap-4">
@@ -89,8 +90,8 @@ export function Hero() {
           >
             <Suspense fallback={null}>
               <ambientLight intensity={0.4} />
-              <pointLight position={[10, 10, 10]} intensity={5} color="#FF4500" />
-              <pointLight position={[-10, -10, -10]} intensity={3} color="#C68E5D" />
+              <pointLight position={[10, 10, 10]} intensity={3} color="#C68E5D" />
+              <pointLight position={[-10, -10, -10]} intensity={2} color="#4E342E" />
               <pointLight position={[0, 0, 5]} intensity={2} color="#FFFFFF" />
               <CoffeeDust count={200} />
               <FieryParticles count={150} />
@@ -123,15 +124,15 @@ export function Hero() {
             initial={{ opacity: 0, letterSpacing: "0.5em" }}
             animate={{ opacity: 1, letterSpacing: "1em" }}
             transition={{ duration: 2, delay: 0.5 }}
-            className="text-gold font-mono text-[10px] uppercase block mb-8 font-bold"
+            className="text-cream/40 font-mono text-[9px] uppercase block mb-6 font-bold"
           >
             THE ULTIMATE AWAKENING
           </motion.span>
-          <h1 className="text-7xl md:text-[12vw] font-bold tracking-tighter mb-8 leading-[0.8] text-glow uppercase text-white">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6 leading-[0.9] uppercase text-white/90">
             Ignite <br />
-            <span className="text-caramel italic serif lowercase">The Soul</span>
+            <span className="text-cream/40 italic serif lowercase">The Soul</span>
           </h1>
-          <p className="text-cream/60 text-lg md:text-2xl mb-12 max-w-2xl mx-auto font-light tracking-wide leading-relaxed">
+          <p className="text-cream/40 text-sm md:text-base mb-10 max-w-xl mx-auto font-light tracking-wide leading-relaxed">
             Experience the explosive intensity of our volcanic-grown beans, roasted to perfection.
           </p>
           

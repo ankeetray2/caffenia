@@ -346,11 +346,11 @@ export function FieryParticles({ count = 100 }) {
       </bufferGeometry>
       <pointsMaterial
         transparent
-        color="#FF4500"
-        size={0.15}
+        color="#C68E5D"
+        size={0.1}
         sizeAttenuation={true}
         blending={THREE.AdditiveBlending}
-        opacity={0.6}
+        opacity={0.3}
       />
     </points>
   );
@@ -381,8 +381,8 @@ export function ExplodingHeroBean() {
               color="#4E342E" 
               roughness={0.2} 
               metalness={0.8} 
-              emissive="#FF4500"
-              emissiveIntensity={2.5}
+              emissive="#4E342E"
+              emissiveIntensity={1.2}
             />
           </mesh>
           <mesh position={[0.08, 0, 0]} scale={[0.85, 1.4, 0.65]}>
@@ -392,8 +392,8 @@ export function ExplodingHeroBean() {
               color="#4E342E" 
               roughness={0.2} 
               metalness={0.8} 
-              emissive="#FF4500"
-              emissiveIntensity={2.5}
+              emissive="#4E342E"
+              emissiveIntensity={1.2}
             />
           </mesh>
         </group>
@@ -402,11 +402,11 @@ export function ExplodingHeroBean() {
       {/* Explosive Aura */}
       <Sphere args={[3, 32, 32]} scale={1.5}>
         <meshStandardMaterial 
-          color="#FF8C00" 
+          color="#4E342E" 
           transparent 
-          opacity={0.1} 
-          emissive="#FF4500" 
-          emissiveIntensity={5} 
+          opacity={0.05} 
+          emissive="#C68E5D" 
+          emissiveIntensity={1.5} 
           side={THREE.BackSide}
         />
       </Sphere>
@@ -414,9 +414,9 @@ export function ExplodingHeroBean() {
       <FieryParticles count={300} />
       
       {/* Intense Point Lights to simulate fire explosion */}
-      <pointLight position={[2, 2, 2]} intensity={20} color="#FF4500" />
-      <pointLight position={[-2, -2, 2]} intensity={15} color="#FF8C00" />
-      <pointLight position={[0, 0, -2]} intensity={10} color="#FFD700" />
+      <pointLight position={[2, 2, 2]} intensity={5} color="#C68E5D" />
+      <pointLight position={[-2, -2, 2]} intensity={3} color="#4E342E" />
+      <pointLight position={[0, 0, -2]} intensity={2} color="#C68E5D" />
     </group>
   );
 }
@@ -432,8 +432,8 @@ export function LiquidBlob() {
           radius={1}
           metalness={0.6}
           roughness={0.1}
-          emissive="#FFA500"
-          emissiveIntensity={0.4}
+          emissive="#4E342E"
+          emissiveIntensity={0.2}
         />
       </Sphere>
     </Float>
